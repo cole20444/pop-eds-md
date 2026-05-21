@@ -7,7 +7,7 @@
 // Run locally:  node scripts/transform-dita.mjs
 // Runs in CI:   .github/workflows/transform-dita.yml
 
-import { readdir, readFile, writeFile, stat } from 'node:fs/promises';
+import { readdir, readFile, writeFile, stat, unlink } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import * as cheerio from 'cheerio';
 
@@ -288,13 +288,14 @@ async function main() {
   for (const file of files) {
     const original = await readFile(file, 'utf8');
     const cleaned = transform(original);
-    if (cleaned !== original) {
-      await writeFile(file, cleaned);
-      console.log(`✓ ${relative('.', file)}`);
-      changed += 1;
-    } else {
-      console.log(`· ${relative('.', file)} (no change)`);
-    }
+    // Always write to .html and delete the .htm source — aem.live appends no
+    // extension when fetching from our GitHub Pages mountpoint, and Pages
+    // resolves extension-less URLs to .html (but not .htm).
+    const htmlPath = file.replace(/\.htm$/, '.html');
+    await writeFile(htmlPath, cleaned);
+    await unlink(file);
+    console.log(`✓ ${relative('.', file)} → ${relative('.', htmlPath)}`);
+    changed += 1;
   }
 
   console.log(`\nTransformed ${changed} / ${files.length} file(s).`);
