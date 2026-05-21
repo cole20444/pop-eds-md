@@ -17,8 +17,8 @@ jobs:
   transform:
     runs-on: ubuntu-latest
 
-    # Skip our own transform commits so we don't loop on ourselves
-    if: "!contains(github.event.head_commit.message, '[skip-transform]')"
+    # GitHub doesn't re-trigger workflows from GITHUB_TOKEN-authored pushes,
+    # so we don't need a skip token. Action's own commits won't loop.
 
     permissions:
       contents: write
@@ -45,5 +45,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/
-          git commit -m "Clean DITA HTML for EDS rendering [skip-transform]"
+          git commit -m "Clean DITA HTML for EDS rendering"
           git push
