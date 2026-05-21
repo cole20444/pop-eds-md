@@ -1,0 +1,7 @@
+# A mountpoint is required by aem.live for site registration. We point an
+# unused path at the dita-franklin-worker so all REAL traffic (/, /foo,
+# /contents/...) falls through to the repo's markdown files.
+mountpoints:
+  /_unused:
+    url: https://dita-franklin-worker.adobeaem.workers.dev/cole20444/pop-eds-md/main/docs
+    type: markup
