@@ -65,15 +65,18 @@ function buildAutoBlocks(main) {
 function injectSidenav(main) {
   if (main.querySelector('.sidenav')) return;
 
+  // The block must be a DIRECT child of the section div. decorateSections
+  // will wrap the block in an intermediate <div> automatically, producing
+  // the structure that the `div.section > div > div` block selector
+  // matches. (Adding our own inner wrapper produces an extra div level
+  // and the block selector misses .sidenav.)
   const section = document.createElement('div');
   section.classList.add('sidenav-container');
 
-  const inner = document.createElement('div');
   const block = document.createElement('div');
   block.classList.add('sidenav');
-  inner.appendChild(block);
-  section.appendChild(inner);
 
+  section.appendChild(block);
   main.prepend(section);
 }
 
