@@ -139,22 +139,23 @@ function rewriteDitaTables($) {
     if (!$rows.length) return;
 
     const tableRows = [];
-    $rows.each((idx, rowEl) => {
+    $rows.each((_idx, rowEl) => {
       const cells = [];
       $(rowEl).children('div').each((__, cellEl) => {
         cells.push($(cellEl).html() || '');
       });
-      if (cells.length) tableRows.push({ idx, cells });
+      if (cells.length) tableRows.push(cells);
     });
     if (!tableRows.length) return;
 
-    const [head, ...rest] = tableRows;
-    const thead = `<thead><tr>${head.cells.map((c) => `<th>${c}</th>`).join('')}</tr></thead>`;
-    const tbody = `<tbody>${
-      rest.map((r) => `<tr>${r.cells.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')
-    }</tbody>`;
+    // Rewrite as a div-based EDS block so the block name is the literal
+    // "table" (consistent across all DITA tables) instead of the first
+    // column header text. We then style this in /blocks/table/.
+    const rowsHtml = tableRows
+      .map((cells) => `<div>${cells.map((c) => `<div>${c}</div>`).join('')}</div>`)
+      .join('');
 
-    $el.replaceWith(`<table>${thead}${tbody}</table>`);
+    $el.replaceWith(`<div class="table">${rowsHtml}</div>`);
   });
 }
 
@@ -280,22 +281,34 @@ function transform(html) {
       'data-attr-format', 'title'].forEach((attr) => $a.removeAttr(attr));
   });
 
-  // ── 9. Strip residual class/id (leave table structure intact) ─────
+  // Classes we MUST preserve through cleanup (they're EDS block markers).
+  const KEEP_CLASSES = new Set(['table']);
+
+  // ── 9. Strip residual class/id (leave table structure + block classes) ──
   $body.find('[class], [id]').each((_, el) => {
     const tag = el.tagName.toLowerCase();
     if (['table', 'thead', 'tbody', 'tr', 'th', 'td'].includes(tag)) return;
-    $(el).removeAttr('class').removeAttr('id');
+    const $el = $(el);
+    const classes = ($el.attr('class') || '').split(/\s+/).filter((c) => KEEP_CLASSES.has(c));
+    if (classes.length) $el.attr('class', classes.join(' '));
+    else $el.removeAttr('class');
+    $el.removeAttr('id');
   });
 
   // ── 10. Aggressive recursive unwrap of class-less <div>/<span> ────
+  // Preserve divs that have a block class AND any div inside such a block.
   let changed = true;
   while (changed) {
     changed = false;
     $body.find('div, span').each((_, el) => {
       const $el = $(el);
-      const tag = el.tagName.toLowerCase();
       if ($el.attr('class') || $el.attr('id')) return;
       if ($el.closest('table').length) return; // preserve table internals
+      // Don't unwrap divs that are descendants of an EDS block (e.g. <div class="table">)
+      if ($el.parents('div[class]').filter((__, p) => {
+        const cls = ($(p).attr('class') || '').split(/\s+/);
+        return cls.some((c) => KEEP_CLASSES.has(c));
+      }).length) return;
       $el.replaceWith($el.contents());
       changed = true;
     });
