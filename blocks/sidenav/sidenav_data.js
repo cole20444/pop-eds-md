@@ -1,1 +1,1 @@
-export default [{"displayName":"Product Overview","url":"contents/topics/product-overview"},{"displayName":"Product Details","url":"contents/topics/product-details"}]
+export default [{"displayName":"Edge Delivery Services Overview","url":"contents/topics/edge-delivery-services-overview"},{"displayName":"Configuring an EDS Output Preset","url":"contents/topics/configuring-an-eds-output-preset"}]
