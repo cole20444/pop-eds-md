@@ -1,5 +1,6 @@
-mountpoints:
-  /:
-    url: https://dita-franklin-worker.adobeaem.workers.dev/your-user-name/your-repo-name/main/docs
-    type: markup
-
+# Intentionally no mountpoints. Content for this site lives in this same
+# GitHub repo (markdown files at the repo root, produced by a GitHub
+# Action that transforms DITA-OT HTML output from /docs/ into EDS-shape
+# markdown). aem.live's standard pipeline serves the markdown directly;
+# no external worker is involved.
+mountpoints: {}
