@@ -160,6 +160,13 @@ function transform(html) {
   $body.find('div.breadcrumbs, div.familylinks').remove();  // we'll provide nav via EDS
   $body.removeAttr('id').removeAttr('class').removeAttr('lang');
 
+  // Idempotency: if a previous run already wrapped content in <main>, unwrap
+  // so we don't end up with <main><main>…</main></main>.
+  $body.find('main').each((_, el) => {
+    const $el = $(el);
+    $el.replaceWith($el.contents());
+  });
+
   // ── 3. EDS-block structures (do these first to preserve them) ──────
 
   rewriteNotes($);
@@ -252,6 +259,8 @@ function transform(html) {
   });
 
   // ── 11. Emit cleaned HTML doc ──────────────────────────────────────
+  // No explicit <main> wrapper — aem.live's html2md works best on standard
+  // body content (it adds the EDS frame itself).
   const bodyHtml = $body.html() || '';
 
   return [
@@ -261,9 +270,7 @@ function transform(html) {
     `<title>${pageTitle}</title>`,
     '</head>',
     '<body>',
-    '<main>',
     bodyHtml.trim(),
-    '</main>',
     '</body>',
     '</html>',
     '',
