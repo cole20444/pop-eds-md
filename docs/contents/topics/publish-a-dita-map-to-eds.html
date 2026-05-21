@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Publish a DITA map to EDS</title>
+</head>
+<body>
+<main>
+<div>
+<h1>Publish a DITA map to EDS</h1><p>With the credentials, OSGi configs, repository, transform Action, and publish profile all in place, publishing a map is a single click in AEM Guides. This task walks through that click, how to verify each stage of the resulting pipeline run, and how to force a refresh if something looks wrong.</p><p>Before you begin:</p><ul><li>All five setup tasks have been completed.</li><li>The ditamap you want to publish has an Edge Delivery Service output preset bound to a working publish profile.</li><li><p>You have access to an AEM as a Cloud Service environment (author tier) where you have at least Developer permissions.</p></li></ul><p>Publishing is the moment the entire pipeline comes alive. The walkthrough below covers the happy path and points at verification steps you can run at each stage if you want to confirm the pipeline is healthy.</p><ol><li>Open the ditamap you want to publish in AEM Guides Map Console.</li><li>Switch to the <b>Generate Output</b> tab.</li><li>Select your EDS output preset and click <b>Generate</b>.If the preset is greyed out, double-check that the publish profile is still selected on the preset's <b>Config</b> tab.A toast notification confirms the publish is queued. The microservice job runs asynchronously on Adobe's side.</li><li>Wait for the success notification.Depending on map size, expect 30–90 seconds. The UI shows the result inline, with a link to the aem.live URL it generated.<p>You should see a message like <code>main--&lt;repo&gt;--&lt;owner&gt;.hlx.live generated successfully</code>.</p><table><tbody><tr><th>Note</th></tr><tr><td>The <code>hlx.live</code> hostname in the success message is a synonym for <code>aem.live</code>. Both forms work.</td></tr></tbody></table></li><li data-attr-importance="optional">(Optional) Verify the microservice committed to GitHub.Open the repository's commits view. You should see a recent commit named <code>Publishing for franklin</code>.</li><li data-attr-importance="optional">(Optional) Verify the transform Action ran.In the GitHub repository's <b>Actions</b> tab, the most recent run of <i>Transform DITA HTML for EDS</i> should be green. The summary lists how many files were modified.A few seconds after the Action completes, a <code>Clean DITA HTML for EDS rendering</code> commit appears in the repository.</li><li>Open the aem.page preview URL in a browser.The URL has the form <code>https://main--&lt;repo&gt;--&lt;owner&gt;.aem.page/&lt;path&gt;</code>. For POP's pipeline the homepage is:<p>https://main--pop-eds-md--cole20444.aem.page/</p>The map's homepage renders with EDS chrome, the sidenav reflects the ditamap structure, and each linked topic loads from <code>/contents/topics/...</code>.</li><li data-attr-importance="optional">(Optional) Force a preview refresh from the admin API.If aem.page is showing stale content, you can invalidate the content-bus cache directly:<pre><code>curl -X POST \
+  -H "Content-Length: 0" \
+  "https://admin.hlx.page/preview/<owner>/<repo>/main/<path>"</path></repo></owner></code></pre><table><tbody><tr><th>Tip</th></tr><tr><td>For a single page, append the page path (e.g., <code>/contents/topics/foo</code>). For the whole site, omit the path; aem.live recrawls everything.</td></tr></tbody></table></li><li data-attr-importance="optional">(Optional) Promote preview to live.If your output preset had <b>Push to live</b> unchecked, you can still promote to aem.live after the fact through the admin API:<pre><code>curl -X POST \
+  -H "Content-Length: 0" \
+  "https://admin.hlx.page/live/<owner>/<repo>/main/<path>"</path></repo></owner></code></pre></li></ol><p>The map is now live on aem.live and is being served from the global edge. End users see the content at https://main--&lt;repo&gt;--&lt;owner&gt;.aem.live/.</p><p>Subsequent edits to topics follow exactly the same workflow: edit in AEM Guides → click Generate Output → wait for the cascading commits → refresh the browser.</p><h2>What a healthy admin status response looks like</h2><p>The admin status API gives you a single view of the pipeline's state for a given path. The response is voluminous but the fields that matter for verification are:</p><pre><code>{
+  "preview": {
+    "status": 200,
+    "sourceLocation": "markup:https://cole20444.github.io/pop-eds-md/...",
+    "lastModified": "..."
+  },
+  "live": {
+    "status": 200,
+    "sourceLocation": "...",
+    "lastModified": "..."
+  }
+}</code></pre><p>Anything other than <code>200</code> on <code>preview.status</code> is a red flag — see <a href="known-issues-and-troubleshooting">Known issues and troubleshooting</a> for the common causes.</p><p>Once you have a successful publish, learn how to extend the frontend with your own branded styling in <a href="customize-eds-blocks-and-styling">Customize EDS blocks and styling</a>.</p><a href="known-issues-and-troubleshooting">Known issues and troubleshooting</a><a href="customize-eds-blocks-and-styling">Customize EDS blocks and styling</a>
+</div>
+</main>
+</body>
+</html>

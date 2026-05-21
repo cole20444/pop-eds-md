@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Customize EDS blocks and styling</title>
+</head>
+<body>
+<main>
+<div>
+<h1>Customize EDS blocks and styling</h1><p>EDS renders any markdown table as a block named after its first cell — and blocks are where all your custom branding lives. This task walks through editing an existing block, adding a new one, and updating site-wide styling, including how the changes propagate through GitHub to aem.live.</p><p>Before you begin:</p><ul><li>You have a working EDS repository with the boilerplate blocks present at <code>blocks/<name>/</name></code>.</li><li>You can install Node.js dependencies for local preview if you want one (<code>aem up</code> runs a proxy server).</li><li>You understand basic CSS and modern JavaScript (ES2022 modules).</li></ul><p>Blocks are the building blocks of an EDS site. Each block is a folder under blocks/ with two files: a stylesheet and a JavaScript module. The framework loads them automatically when it encounters a <code>&lt;div class="&lt;name&gt;"&gt;</code> in the page.</p><p>The transform Action rewrites DITA notes, tables, and a handful of other elements into block divs, so the cycle from "DITA author wants a new note variant" to "branded note appears on the page" is a transform update plus a new block folder.</p><ol><li>Decide which block you want to edit.The POP-branded blocks shipped with the repository are <code>blocks/{note,warning,tip,caution,important,table,sidenav,header,footer}/</code>. Each is independent — editing one will not affect the others.</li><li>Edit the block's CSS file at <code>blocks/<name>/<name>.css</name></name></code>.The block's outer element has the class <code>&lt;name&gt;</code> plus the standard EDS decoration classes (<code>block</code>, <code>data-block-name="&lt;name&gt;"</code>). You can target it directly.<p>For example, to make warnings have a stronger left-border accent and dark text:</p><pre><code>.warning {
+  border-left: 4px solid var(--pop-color-warning);
+  background: var(--pop-warning-tint);
+  color: var(--pop-color-text);
+  padding: 1rem 1.25rem;
+  border-radius: 0.25rem;
+}
+.warning::before {
+  content: "⚠";
+  margin-right: 0.5rem;
+  font-weight: 700;
+}</code></pre></li><li data-attr-importance="optional">If the block needs runtime behavior, edit <code>blocks/<name>/<name>.js</name></name></code>.The default export is invoked with the block's root element when the framework decorates the block. The function can be async.<p>For instance, the table block's job is to promote the <code>&lt;div class="table"&gt;</code> structure into a real <code>&lt;table&gt;</code> with <code>&lt;thead&gt;</code> and <code>&lt;tbody&gt;</code>:</p><pre><code>export default function decorate(block) {
+  const rows = [...block.children];
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  for (const cell of rows[0].children) {
+    const th = document.createElement('th');
+    th.innerHTML = cell.innerHTML;
+    headerRow.append(th);
+  }
+  thead.append(headerRow);
+  table.append(thead);
+  const tbody = document.createElement('tbody');
+  for (const row of rows.slice(1)) {
+    const tr = document.createElement('tr');
+    for (const cell of row.children) {
+      const td = document.createElement('td');
+      td.innerHTML = cell.innerHTML;
+      tr.append(td);
+    }
+    tbody.append(tr);
+  }
+  table.append(tbody);
+  block.replaceChildren(table);
+}</code></pre></li><li>(Optional) Preview locally with the AEM CLI.The <a href="https://github.com/adobe/aem-cli" target="_blank">aem-cli</a> runs a local proxy that serves your local <code>blocks/</code>, <code>scripts/</code>, and <code>styles/</code> on top of the live aem.page content. Run from the repository root:<pre><code>aem up</code></pre>The proxy listens on <code>http://localhost:3000</code> and hot-reloads on any local file change.</li><li>Commit and push.<pre><code>git add blocks/warning/warning.css
+git commit -m "Warning block: stronger border, dark text"
+git push</code></pre>Block files bypass the transform Action entirely and go through aem.live's code-bus directly. Within 5–15 seconds the new version is served on aem.page.</li><li>Hard-refresh the page in your browser to defeat the local cache (Cmd+Shift+R / Ctrl+Shift+R).The block now reflects your edits.</li><li data-attr-importance="optional">(Optional) Add a new block.<ol><li>Create <code>blocks/<new-block>/<new-block>.css</new-block></new-block></code> and <code>blocks/<new-block>/<new-block>.js</new-block></new-block></code>.</li><li>Update <code>scripts/transform-dita.mjs</code> to map a DITA pattern to a <code>&lt;div class="&lt;new-block&gt;"&gt;</code> in the cleaned HTML.</li><li>Commit, push, and trigger a republish from AEM Guides so the transform runs against fresh DITA-OT output.</li></ol></li><li data-attr-importance="optional">(Optional) Update site-wide styling.Site-wide styles live in <code>styles/styles.css</code>. The boilerplate's base styles are at the top of the file; we keep a "POP modernization layer" at the end so it's easy to find what we changed.<p>The brand tokens are defined as CSS custom properties at <code>:root</code>:</p><pre><code>:root {
+  --pop-color-primary:  #1f3c88;
+  --pop-color-accent:   #ff7849;
+  --pop-color-warning:  #f59e0b;
+  --pop-color-caution:  #ef4444;
+  --pop-color-tip:      #10b981;
+  --pop-color-text:     #1a1a1a;
+  --pop-color-muted:    #6b7280;
+  --pop-warning-tint:   #fff7ed;
+  --pop-tip-tint:       #ecfdf5;
+  --pop-caution-tint:   #fef2f2;
+}</code></pre><p>Once these are swapped for the official POP palette, every block that references them gets the new look automatically.</p></li></ol><p>You now know the loop for iterating on the EDS frontend: edit locally, push, hard-refresh. Block files propagate in seconds; topic content takes a republish from AEM Guides because it flows through the transform Action.</p><h2>The block update timing reference</h2><div class="table"><div><div>Change</div><div>Trigger</div><div>Typical lag</div></div><div><div>Block CSS or JS</div><div><code>git push</code></div><div>5–15 seconds</div></div><div><div>Site-wide styles or scripts</div><div><code>git push</code></div><div>5–15 seconds</div></div><div><div>Topic content</div><div><b>Generate Output</b></div><div>1–3 minutes (full pipeline)</div></div><div><div>Sidenav structure</div><div><b>Generate Output</b></div><div>1–3 minutes (regenerated each publish)</div></div><div><div>Transform script behavior</div><div><code>git push</code> + republish</div><div>5–15 sec to land + 1–3 min republish</div></div></div><p>For a tour of which DITA elements end up in which EDS blocks, see <a href="dita-element-rendering-reference">DITA element rendering reference</a>.</p><a href="dita-element-rendering-reference">DITA element rendering reference</a><a href="https://www.aem.live/developer/block-collection" target="_blank">aem.live block collection (community blocks)</a>
+</div>
+</main>
+</body>
+</html>

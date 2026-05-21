@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Set up the DITA HTML transform Action</title>
+</head>
+<body>
+<main>
+<div>
+<h1>Set up the DITA HTML transform Action</h1><p>DITA-OT's HTML output is not in the shape that <em>helix-html2md</em> can convert. This task adds a GitHub Action that runs on every push to docs/ and cleans the HTML into the magic <code>&lt;main&gt;&lt;div&gt;…&lt;/div&gt;&lt;/main&gt;</code> shape aem.live requires.</p><p>Before you begin:</p><ul><li>You have completed <a href="create-and-configure-the-eds-repository">Create and configure the EDS repository</a>.</li><li>You have write access to the <code>.github/workflows/</code> directory of the repository.</li><li>You have Node.js installed locally for testing the transform script before committing it.</li></ul><p>The transform Action does two things. First, it runs a Node.js script (scripts/transform-dita.mjs) that uses <em>cheerio</em> to rewrite DITA-OT's HTML into clean EDS-compatible HTML. Second, it commits the result back to the same /docs/ directory.</p><p>The script is intentionally located <i>outside</i>/docs/ so the publishing microservice never overwrites it.</p><ol><li>Create the workflow file at <code>.github/workflows/transform-dita.yml</code>.<pre><code>name: Transform DITA HTML for EDS
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**.htm'
+      - 'docs/**.html'
+      - 'scripts/transform-dita.mjs'
+      - '.github/workflows/transform-dita.yml'
+permissions:
+  contents: write
+jobs:
+  transform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install --no-save cheerio
+      - run: node scripts/transform-dita.mjs
+      - name: Commit cleaned HTML
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Clean DITA HTML for EDS rendering"
+            git push
+          fi</code></pre>The <code>paths</code> filter ensures the Action only runs on relevant changes. Pushes by the Action itself (using <code>GITHUB_TOKEN</code>) do not retrigger workflows, so a skip-token guard is not required.</li><li>Create the transform script at <code>scripts/transform-dita.mjs</code>.The script walks every <code>.htm</code> or <code>.html</code> file in <code>/docs/</code>, loads it with cheerio, applies a sequence of cleanup operations, and writes the result back as <code>.html</code>.<p>The full script is in the POP repository at <a href="https://github.com/cole20444/pop-eds-md/blob/main/scripts/transform-dita.mjs" target="_blank">scripts/transform-dita.mjs</a>. A condensed structure looks like:</p><pre><code>import { readFile, writeFile, readdir, rename, unlink } from 'node:fs/promises';
+import { join, extname } from 'node:path';
+import * as cheerio from 'cheerio';
+const DOCS_DIR = 'docs';
+const KEEP_CLASSES = new Set(['table']);
+async function* walk(dir) {
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) yield* walk(full);
+    else yield full;
+  }
+}
+function transform(html) {
+  const $ = cheerio.load(html, { decodeEntities: false });
+  // 1. strip DITA-OT cruft
+  $('.prolog, .breadcrumb, .prefix-content').remove();
+  // 2. convert div-tables to EDS table blocks
+  $('div.tablenoborder, div.table').each((_, el) =&gt; {
+    // rewrite rows to nested divs, set class="table"
+  });
+  // 3. codeblock → <pre><code>
+  $('code.codeblock').each((_, el) =&gt; { /* ... */ });
+  // 4. note variants → semantic block classes
+  $('div.note').each((_, el) =&gt; {
+    const variant = ($(el).attr('class') || '')
+      .match(/note_(warning|tip|caution|important)/)?.[1];
+    $(el).attr('class', variant || 'note');
+  });
+  // 5. inline span normalization
+  $('span.uicontrol').each((_, el) =&gt; $(el).replaceWith(`<b>${$(el).html()}</b>`));
+  $('span.filepath').each((_, el) =&gt; $(el).replaceWith(`<code>${$(el).html()}</code>`));
+  // 6. unwrap structural divs/spans
+  $('div, span').each((_, el) =&gt; {
+    const cls = $(el).attr('class');
+    if (!cls || !KEEP_CLASSES.has(cls)) {
+      // unwrap if it has no semantic value
+    }
+  });
+  // 7. wrap body in the helix-html2md magic shape
+  const body = $('body').html();
+  $('body').html(`<main>${body}</main>`);
+  return $.html();
+}
+for await (const file of walk(DOCS_DIR)) {
+  if (!/\.html?$/.test(file)) continue;
+  const cleaned = transform(await readFile(file, 'utf8'));
+  const outPath = file.replace(/\.htm$/, '.html');
+  await writeFile(outPath, cleaned);
+  if (outPath !== file) await unlink(file);
+}</code></pre></code></pre><table><tbody><tr><th>Tip</th></tr><tr><td>Test the script locally against a representative DITA-OT HTML file before committing it. Run <code>node scripts/transform-dita.mjs</code> from the repository root and inspect the resulting file with a browser to confirm the output looks correct.</td></tr></tbody></table></li><li>Commit and push both files.<pre><code>git add .github/workflows/transform-dita.yml scripts/transform-dita.mjs
+git commit -m "Add DITA HTML transform Action"
+git push</code></pre></li><li>Trigger a test publish from AEM Guides and watch the Action run in the <b>Actions</b> tab of the GitHub repository.On a successful run you will see two commits land on <code>main</code>: first the <code>Publishing for franklin</code> commit from the microservice (with raw DITA-OT HTML), and seconds later a <code>Clean DITA HTML for EDS rendering</code> commit from the Action.</li></ol><p>Every map publish now flows through the transform automatically. The HTML that aem.live ingests is in the <code>&lt;main&gt;&lt;div&gt;…&lt;/div&gt;&lt;/main&gt;</code> shape, DITA-OT cruft is gone, and tables, notes, and code blocks are normalized to clean EDS-friendly markup.</p><h2>Before and after — note element example</h2><p>Before the transform, DITA-OT emits a warning note like this:</p><pre><code><table><tbody><tr><th>Warning</th></tr><tr><td>Do not delete fstab.yaml.</td></tr></tbody></table></code></pre><p>After the transform, the same content is:</p><pre><code>Do not delete fstab.yaml.</code></pre><p>aem.live then renders that as the POP-branded Warning block defined in /blocks/warning/.</p><p>You are now ready to publish actual DITA content. Continue with <a href="configure-a-publish-profile-and-output-preset">Configure a publish profile and output preset</a>.</p><a href="https://github.com/adobe/helix-html2md" target="_blank">helix-html2md on GitHub</a><a href="https://cheerio.js.org/" target="_blank">cheerio documentation</a>
+</div>
+</main>
+</body>
+</html>
