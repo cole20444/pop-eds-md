@@ -1,6 +1,6 @@
 import { migrateTree } from "../utils.js";
-const treeData = [{"displayName":"Product Overview","url":"contents/topics/product-overview"},{"displayName":"Product Details","url":"contents/topics/product-details"}]
-const mapTitle = "Test Products"
+const treeData = [{"displayName":"Edge Delivery Services Overview","url":"contents/topics/edge-delivery-services-overview"},{"displayName":"Configuring an EDS Output Preset","url":"contents/topics/configuring-an-eds-output-preset"}]
+const mapTitle = "EDS POC Test Map"
 const isDesktop = window.matchMedia("(min-width: 900px)");
 
 function expandHeirarchy(element, root) {
