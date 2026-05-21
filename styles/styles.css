@@ -93,6 +93,40 @@
   --header-button-group-button-bg-color: #fff;
   --header-mob-toc-btn-bg-color: #F1F1F1;
   --header-mob-toc-btn-border-color: #E7E7E7;
+
+  /* ─────────────────────────────────────────────────────────────────
+   *  POP brand tokens  (replace hex values when official brand is known)
+   * ──────────────────────────────────────────────────────────────── */
+  --pop-color-primary:   #642CDB;   /* primary accent */
+  --pop-color-info:      #3B82F6;   /* info / note */
+  --pop-color-success:   #10B981;   /* positive / tip */
+  --pop-color-warning:   #F59E0B;   /* warning amber */
+  --pop-color-caution:   #F97316;   /* stronger orange */
+  --pop-color-danger:    #EF4444;   /* danger red / important */
+
+  /* tint = block background; ring = accent border + icon stroke */
+  --pop-note-tint:        #EFF6FF;
+  --pop-note-ring:        var(--pop-color-info);
+  --pop-tip-tint:         #ECFDF5;
+  --pop-tip-ring:         var(--pop-color-success);
+  --pop-warning-tint:     #FFFBEB;
+  --pop-warning-ring:     var(--pop-color-warning);
+  --pop-caution-tint:     #FFF7ED;
+  --pop-caution-ring:     var(--pop-color-caution);
+  --pop-important-tint:   #FEF2F2;
+  --pop-important-ring:   var(--pop-color-danger);
+
+  /* Table block (data tables, NOT note blocks) */
+  --pop-table-header-bg:  #0B1D59;
+  --pop-table-header-fg:  #FFFFFF;
+  --pop-table-row-alt-bg: #F8FAFC;
+  --pop-table-border:     #E2E8F0;
+
+  /* Shared block scale */
+  --pop-block-radius:     8px;
+  --pop-block-pad-y:      14px;
+  --pop-block-pad-x:      18px;
+  --pop-block-gap:        1.25rem;
 }
 
 html {

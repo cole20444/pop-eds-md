@@ -1,0 +1,58 @@
+/*
+ * Data table block.
+ * Source markup (post helix-html2md):
+ *   <div class="table">
+ *     <div><div>Header A</div><div>Header B</div><div>Header C</div></div>
+ *     <div><div>cell</div><div>cell</div><div>cell</div></div>
+ *     ...
+ *   </div>
+ * After /blocks/table/table.js promotes the first row, it becomes:
+ *   <table>
+ *     <thead><tr><th>…</th></tr></thead>
+ *     <tbody><tr><td>…</td></tr></tbody>
+ *   </table>
+ * which this CSS styles.
+ */
+
+.table {
+  margin: var(--pop-block-gap) 0;
+  overflow-x: auto;
+}
+
+.table table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: var(--pop-block-radius);
+  overflow: hidden;
+  border: 1px solid var(--pop-table-border);
+  font-size: var(--body-font-size-xs);
+}
+
+.table th,
+.table td {
+  padding: 10px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--pop-table-border);
+}
+
+.table thead th {
+  background: var(--pop-table-header-bg);
+  color: var(--pop-table-header-fg);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-bottom: none;
+}
+
+.table tbody tr:nth-child(even) td {
+  background: var(--pop-table-row-alt-bg);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table code {
+  font-family: var(--fixed-font-family);
+  font-size: 0.9em;
+}

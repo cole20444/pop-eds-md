@@ -1,0 +1,25 @@
+.tip {
+  display: flex;
+  gap: 0.75rem;
+  margin: var(--pop-block-gap) 0;
+  padding: var(--pop-block-pad-y) var(--pop-block-pad-x);
+  border: 1px solid var(--pop-tip-ring);
+  border-left-width: 4px;
+  border-radius: var(--pop-block-radius);
+  background: var(--pop-tip-tint);
+  color: var(--text-color);
+  font-size: var(--body-font-size-xs);
+  line-height: 1.5;
+}
+
+.tip::before {
+  content: "💡";
+  flex: 0 0 auto;
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+.tip > div { flex: 1 1 auto; min-width: 0; }
+.tip p { margin: 0; }
+.tip p + p { margin-top: 0.5em; }
+.tip a { color: var(--pop-tip-ring); text-decoration: underline; }
