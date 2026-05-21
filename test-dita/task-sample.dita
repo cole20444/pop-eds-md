@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE task PUBLIC "-//OASIS//DTD DITA Task//EN" "task.dtd">
+<task id="eds-poc-task">
+    <title>Configuring an EDS Output Preset</title>
+    <shortdesc>This task explains how to configure an Edge Delivery Service
+        output preset on a DITA map in AEM Guides, so generated content is
+        published to a GitHub repository served by aem.live.</shortdesc>
+    <prolog>
+        <author>POP Tech Team</author>
+        <metadata>
+            <keywords>
+                <keyword>EDS</keyword>
+                <keyword>output preset</keyword>
+                <keyword>publishing</keyword>
+            </keywords>
+        </metadata>
+    </prolog>
+    <taskbody>
+        <prereq>
+            <p>Before you begin, ensure that:</p>
+            <ul>
+                <li>You have a GitHub repository created from the
+                    <xref href="https://github.com/adobe/aem-guides-boilerplate" format="html" scope="external">aem-guides-boilerplate</xref>
+                    template.</li>
+                <li>AEM Code Sync is installed on that repository.</li>
+                <li>The microservice OSGi configurations are deployed to your
+                    AEMaaCS environment.</li>
+                <li>You have administrator permissions in AEM Guides.</li>
+            </ul>
+        </prereq>
+
+        <context>
+            <p>An EDS <term>output preset</term> connects a DITA map to a
+                <term>publish profile</term>, which holds the GitHub credentials
+                that AEM Guides uses to commit generated HTML to your
+                repository. Once configured, clicking <uicontrol>Generate
+                Output</uicontrol> triggers the full publishing pipeline.</p>
+        </context>
+
+        <steps>
+            <step>
+                <cmd>Open your DITA map in <uicontrol>Map Console</uicontrol>.</cmd>
+                <info>You can access Map Console from the asset browser by
+                    right-clicking a map and selecting <uicontrol>Open in Map
+                    Console</uicontrol>.</info>
+            </step>
+
+            <step>
+                <cmd>Navigate to the <uicontrol>Output Presets</uicontrol>
+                    tab.</cmd>
+            </step>
+
+            <step>
+                <cmd>Click the <uicontrol>+</uicontrol> icon to create a new
+                    preset.</cmd>
+            </step>
+
+            <step>
+                <cmd>In the preset creation dialog, configure the following
+                    options:</cmd>
+                <choices>
+                    <choice><b>Type:</b> select <uicontrol>Edge Delivery
+                        Service (Beta)</uicontrol>.</choice>
+                    <choice><b>Name:</b> enter a descriptive name such as
+                        <codeph>EDS – production</codeph>.</choice>
+                </choices>
+            </step>
+
+            <step>
+                <cmd>Click <uicontrol>Add</uicontrol> to create the
+                    preset.</cmd>
+                <stepresult>The new preset appears in your map's preset
+                    list.</stepresult>
+            </step>
+
+            <step>
+                <cmd>Open the newly created preset and switch to the
+                    <uicontrol>Config</uicontrol> tab.</cmd>
+                <substeps>
+                    <substep>
+                        <cmd>Select your publish profile from the
+                            <uicontrol>Publish profile</uicontrol>
+                            dropdown.</cmd>
+                    </substep>
+                    <substep>
+                        <cmd>Enable the <uicontrol>Push to live</uicontrol>
+                            toggle.</cmd>
+                    </substep>
+                    <substep>
+                        <cmd>Click <uicontrol>Save</uicontrol>.</cmd>
+                    </substep>
+                </substeps>
+            </step>
+
+            <step>
+                <cmd>Click <uicontrol>Generate Output</uicontrol> to trigger
+                    the publishing pipeline.</cmd>
+                <info>The microservice converts your DITA content and commits
+                    it to the configured GitHub repository under
+                    <filepath>/docs/</filepath>.</info>
+            </step>
+        </steps>
+
+        <result>
+            <p>Your DITA content is now published to GitHub and available on
+                both the EDS preview and live URLs:</p>
+            <ul>
+                <li><filepath>https://main--{repo}--{owner}.aem.page/</filepath>
+                    (preview)</li>
+                <li><filepath>https://main--{repo}--{owner}.aem.live/</filepath>
+                    (live)</li>
+            </ul>
+            <note type="tip">Use the preview URL to validate changes before
+                they go live to end users.</note>
+        </result>
+
+        <example>
+            <title>Example publish profile JSON</title>
+            <p>For reference, here is what a complete publish profile looks
+                like when stored in AEM:</p>
+            <codeblock outputclass="language-json">{
+  "profileId": "abc-123",
+  "type": "github",
+  "profileName": "EDS - production",
+  "repoName": "my-eds-site",
+  "userName": "my-org",
+  "branch": "main",
+  "rootFolder": "docs"
+}</codeblock>
+        </example>
+
+        <postreq>
+            <p>After completing this task, see
+                <xref href="concept-sample.dita" type="concept">Edge Delivery
+                Services Overview</xref> for background on the EDS
+                architecture.</p>
+        </postreq>
+    </taskbody>
+</task>

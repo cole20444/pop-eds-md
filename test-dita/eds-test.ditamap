@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE map PUBLIC "-//OASIS//DTD DITA Map//EN" "map.dtd">
+<map>
+    <title>EDS POC Test Map</title>
+    <topicmeta>
+        <author>POP Tech Team</author>
+        <shortdesc>A test map containing sample concept and task topics with
+            a wide variety of DITA elements, used to validate the AEM Guides
+            → EDS rendering pipeline.</shortdesc>
+    </topicmeta>
+
+    <topicref href="concept-sample.dita" type="concept"
+        navtitle="Edge Delivery Services Overview"/>
+
+    <topicref href="task-sample.dita" type="task"
+        navtitle="Configuring an EDS Output Preset"/>
+</map>

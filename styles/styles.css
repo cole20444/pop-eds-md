@@ -423,3 +423,220 @@ body.hide-content-scroll {
 .hide-content-scroll main .breadcrumbs-container{
   overflow: hidden;
 }
+
+/* =================================================================
+ *  POP modernization layer
+ *  Layered on top of the boilerplate base. Rules below intentionally
+ *  override earlier ones for typography, content area, code, links,
+ *  blockquotes, lists, and mobile responsiveness.
+ * ================================================================= */
+
+/* ── Base typography ─────────────────────────────────────────────── */
+
+body {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #1F2937;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* The boilerplate gives every <h1>-<h6> the same size; reset that. */
+main h1, main h2, main h3,
+main h4, main h5, main h6 {
+  font-size: revert;
+  font-weight: revert;
+  margin: revert;
+  color: #0F172A;
+  letter-spacing: -0.01em;
+  scroll-margin-top: calc(var(--nav-height) + 1rem);
+}
+
+main h1 {
+  font-size: clamp(2rem, 4.5vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0.5rem 0 1rem;
+  color: #0B1D59;
+  letter-spacing: -0.02em;
+}
+
+main h2 {
+  font-size: clamp(1.5rem, 3vw, 1.875rem);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 2.5rem 0 0.75rem;
+  padding-top: 0.25rem;
+}
+
+main h3 {
+  font-size: clamp(1.2rem, 2.4vw, 1.375rem);
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 1.75rem 0 0.5rem;
+}
+
+main h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}
+
+/* Body text */
+main p {
+  margin: 0 0 1.15em;
+}
+
+main strong, main b { font-weight: 600; }
+main em, main i    { font-style: italic; }
+
+/* ── Links ───────────────────────────────────────────────────────── */
+
+main a:any-link {
+  color: var(--pop-color-primary);
+  text-decoration: underline;
+  text-decoration-color: rgba(100, 44, 219, 0.35);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s ease, color 0.15s ease;
+}
+
+main a:any-link:hover {
+  text-decoration-color: var(--pop-color-primary);
+  color: var(--pop-color-primary);
+}
+
+/* ── Inline code ─────────────────────────────────────────────────── */
+
+main :where(p, li, td, h1, h2, h3, h4, h5, h6) code {
+  background: #F1F5F9;
+  color: #0B1D59;
+  font-family: var(--fixed-font-family);
+  font-size: 0.875em;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+/* ── Code blocks ─────────────────────────────────────────────────── */
+
+main pre {
+  background: #0F172A;
+  color: #E2E8F0;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--pop-block-radius);
+  margin: var(--pop-block-gap) 0;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  border: 1px solid #1E293B;
+}
+
+main pre code {
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 0;
+  font-size: inherit;
+  border-radius: 0;
+}
+
+/* ── Blockquote ──────────────────────────────────────────────────── */
+
+main blockquote {
+  font-style: normal;
+  font-size: 1.05em;
+  margin: var(--pop-block-gap) 0;
+  text-indent: 0;
+  padding: 1.25rem 1.5rem;
+  border-left: 4px solid var(--pop-color-primary);
+  background: #FAFAFB;
+  border-radius: 0 var(--pop-block-radius) var(--pop-block-radius) 0;
+  color: #374151;
+}
+
+main blockquote p::before,
+main blockquote p::after { content: none; }
+main blockquote p { margin: 0; }
+main blockquote p + p { margin-top: 0.75em; }
+
+/* ── Lists ───────────────────────────────────────────────────────── */
+
+main ul, main ol {
+  padding-left: 1.5rem;
+  margin: 0 0 1.15em;
+}
+
+main li {
+  margin-bottom: 0.4em;
+}
+
+main li > ul,
+main li > ol {
+  margin-top: 0.4em;
+  margin-bottom: 0;
+}
+
+main li::marker {
+  color: #94A3B8;
+}
+
+/* ── Horizontal rule (used between EDS sections) ─────────────────── */
+
+main hr {
+  border: 0;
+  border-top: 1px solid #E2E8F0;
+  margin: 2.5rem 0;
+}
+
+/* ── Content area: reading width + padding ───────────────────────── */
+
+main .section {
+  padding: 1.5rem 1.5rem 3rem;
+}
+
+main .section > div {
+  /* The boilerplate already caps this at 1200px on >=900px screens.
+     Tighter for prose readability. */
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+/* ── Mobile responsiveness ───────────────────────────────────────── */
+
+@media (max-width: 760px) {
+  body {
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  main .section {
+    padding: 1rem 1.1rem 2rem;
+  }
+  main h1 {
+    margin-top: 0.75rem;
+  }
+  main h2 {
+    margin-top: 2rem;
+  }
+  main pre {
+    padding: 1rem;
+    font-size: 0.8125rem;
+    margin-left: -1.1rem;
+    margin-right: -1.1rem;
+    border-radius: 0;
+  }
+}
+
+/* ── Selection ───────────────────────────────────────────────────── */
+
+::selection {
+  background: rgba(100, 44, 219, 0.18);
+  color: inherit;
+}
+
+/* ── Smooth in-page scrolling (anchor links) ─────────────────────── */
+
+html {
+  scroll-behavior: smooth;
+}
