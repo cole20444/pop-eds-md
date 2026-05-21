@@ -261,10 +261,11 @@ function transform(html) {
   });
 
   // ── 11. Emit cleaned HTML doc ──────────────────────────────────────
-  // aem.live's html2md (designed around Google-Docs-style published HTML)
-  // looks for content inside a wrapping <div>, not as direct children of
-  // <body>. Wrap once so the converter recognizes our content as the
-  // page's section.
+  // aem.live's helix-html2md REQUIRES:
+  //   1. A <main> element at the top level (returns empty string if absent)
+  //   2. Content wrapped in <div>(s) as direct children of <main> — bare
+  //      <h1>/<p> siblings of <div> get stripped by createSections()
+  // Source: github.com/adobe/helix-html2md src/html2md.js
   const bodyHtml = $body.html() || '';
 
   return [
@@ -274,9 +275,11 @@ function transform(html) {
     `<title>${pageTitle}</title>`,
     '</head>',
     '<body>',
+    '<main>',
     '<div>',
     bodyHtml.trim(),
     '</div>',
+    '</main>',
     '</body>',
     '</html>',
     '',
