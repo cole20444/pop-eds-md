@@ -1,0 +1,107 @@
+<!--?xml version="1.0" encoding="utf-8" ?--><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="../../_rhdefault.css"></head><body id="GUID-8b349f4e-9f0c-45aa-91dc-37613db68822" class="topic task" lang="en_US"><div class="breadcrumbs"><div><div><a href="">Repository setup</a></div><div><a href="contents/topics/set-up-the-dita-html-transform-action">Set up the DITA HTML transform Action</a></div></div></div><h1 class="title">Set up the DITA HTML transform Action</h1><div class="shortdesc"><div><div><span>DITA-OT's HTML output is not in the shape that </span><em class="term display-inline">helix-html2md</em><span> can convert. This task adds a GitHub Action that runs on every push to </span><span class="ph filepath display-inline">docs/</span><span> and cleans the HTML into the magic </span><code class="ph codeph display-inline">&lt;main&gt;&lt;div&gt;…&lt;/div&gt;&lt;/main&gt;</code><span> shape aem.live requires.</span></div></div></div><div class="collapsible-tags collapsed-tag prolog"><span class="prefix-content">Prolog information</span><div class="author"><span class="prefix-content">Author: </span>POP Tech Team</div><div class="critdates"><span class="prefix-content">Critical dates: </span><div class="created tcx-empty-element" data-attr-date="2026-05-21"><span class="prefix-content">Created: 2026-05-21</span></div></div><div class="metadata"><span class="prefix-content">Metadata</span><div class="audience tcx-empty-element" data-attr-job="implementing" data-attr-type="programmer"><span class="prefix-content">Audience: programmer</span></div><div class="category"><span class="prefix-content">Category: </span>Setup</div><div class="keywords"><span class="prefix-content">Keywords: </span><span class="keyword display-inline">GitHub Actions</span><span class="keyword display-inline">cheerio</span><span class="keyword display-inline">helix-html2md</span><span class="keyword display-inline">transform</span></div></div></div><span class="prefix-content">PREREQUISITE </span><div class="p"><div><div><span>Before you begin:</span></div></div></div><ul class="ul"><li class="li">You have completed <a class="xref" title="The EDS repository is where the publishing microservice commits generated HTML and where your frontend code (blocks, styles, scripts) lives. This task walks through creating the repository, configuring fstab.yaml, enabling GitHub Pages, and installing AEM Code Sync — in that order." href="create-and-configure-the-eds-repository" data-attr-href="create-and-configure-the-eds-repository.dita" data-attr-type="task">Create and configure the EDS repository</a>.</li><li class="li">You have write access to the <span class="ph filepath display-inline">.github/workflows/</span> directory of the repository.</li><li class="li">You have Node.js installed locally for testing the transform script before committing it.</li></ul><div class="p"><div><div><span>The transform Action does two things. First, it runs a Node.js script (</span><span class="ph filepath display-inline">scripts/transform-dita.mjs</span><span>) that uses </span><em class="term display-inline">cheerio</em><span> to rewrite DITA-OT's HTML into clean EDS-compatible HTML. Second, it commits the result back to the same </span><span class="ph filepath display-inline">/docs/</span><span> directory.</span></div></div></div><div class="p"><div><div><span>The script is intentionally located </span><i class="ph i display-inline">outside</i><span class="ph filepath display-inline">/docs/</span><span> so the publishing microservice never overwrites it.</span></div></div></div><ol class="ol steps"><li class="li step"><span class="ph cmd display-inline">Create the workflow file at <span class="ph filepath display-inline">.github/workflows/transform-dita.yml</span>.</span><div class="itemgroup stepxmp"><code class="language-yaml pre-white-space pre codeblock display-block" data-attr-outputclass="language-yaml" data-attr-xml:space="preserve">name: Transform DITA HTML for EDS<br><br>
+<br><br>
+on:<br><br>
+&nbsp; push:<br><br>
+&nbsp; &nbsp; branches: [main]<br><br>
+&nbsp; &nbsp; paths:<br><br>
+&nbsp; &nbsp; &nbsp; - 'docs/**.htm'<br><br>
+&nbsp; &nbsp; &nbsp; - 'docs/**.html'<br><br>
+&nbsp; &nbsp; &nbsp; - 'scripts/transform-dita.mjs'<br><br>
+&nbsp; &nbsp; &nbsp; - '.github/workflows/transform-dita.yml'<br><br>
+<br><br>
+permissions:<br><br>
+&nbsp; contents: write<br><br>
+<br><br>
+jobs:<br><br>
+&nbsp; transform:<br><br>
+&nbsp; &nbsp; runs-on: ubuntu-latest<br><br>
+&nbsp; &nbsp; steps:<br><br>
+&nbsp; &nbsp; &nbsp; - uses: actions/checkout@v4<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; with:<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; fetch-depth: 0<br><br>
+<br><br>
+&nbsp; &nbsp; &nbsp; - uses: actions/setup-node@v4<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; with:<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; node-version: '20'<br><br>
+<br><br>
+&nbsp; &nbsp; &nbsp; - run: npm install --no-save cheerio<br><br>
+<br><br>
+&nbsp; &nbsp; &nbsp; - run: node scripts/transform-dita.mjs<br><br>
+<br><br>
+&nbsp; &nbsp; &nbsp; - name: Commit cleaned HTML<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; run: |<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; git config user.name &nbsp;"github-actions[bot]"<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; git add docs/<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if git diff --cached --quiet; then<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; echo "No changes to commit"<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; else<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; git commit -m "Clean DITA HTML for EDS rendering"<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; git push<br><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; fi<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></code></div><div class="itemgroup info"><span class="prefix-content">ADDITIONAL INFORMATION: </span>The <code class="ph codeph display-inline">paths</code> filter ensures the Action only runs on relevant changes. Pushes by the Action itself (using <code class="ph codeph display-inline">GITHUB_TOKEN</code>) do not retrigger workflows, so a skip-token guard is not required.</div></li><li class="li step"><span class="ph cmd display-inline">Create the transform script at <span class="ph filepath display-inline">scripts/transform-dita.mjs</span>.</span><div class="itemgroup info"><span class="prefix-content">ADDITIONAL INFORMATION: </span>The script walks every <span class="ph filepath display-inline">.htm</span> or <span class="ph filepath display-inline">.html</span> file in <span class="ph filepath display-inline">/docs/</span>, loads it with cheerio, applies a sequence of cleanup operations, and writes the result back as <span class="ph filepath display-inline">.html</span>.</div><div class="itemgroup stepxmp"><div class="p"><div><div><span>The full script is in the POP repository at </span><a class="xref" href="https://github.com/cole20444/pop-eds-md/blob/main/scripts/transform-dita.mjs" data-attr-format="html" data-attr-href="https://github.com/cole20444/pop-eds-md/blob/main/scripts/transform-dita.mjs" data-attr-scope="external" target="_blank">scripts/transform-dita.mjs</a><span>. A condensed structure looks like:</span></div></div></div><code class="language-javascript pre-white-space pre codeblock display-block" data-attr-outputclass="language-javascript" data-attr-xml:space="preserve">import { readFile, writeFile, readdir, rename, unlink } from 'node:fs/promises';<br><br>
+import { join, extname } from 'node:path';<br><br>
+import * as cheerio from 'cheerio';<br><br>
+<br><br>
+const DOCS_DIR = 'docs';<br><br>
+const KEEP_CLASSES = new Set(['table']);<br><br>
+<br><br>
+async function* walk(dir) {<br><br>
+&nbsp; for (const entry of await readdir(dir, { withFileTypes: true })) {<br><br>
+&nbsp; &nbsp; const full = join(dir, entry.name);<br><br>
+&nbsp; &nbsp; if (entry.isDirectory()) yield* walk(full);<br><br>
+&nbsp; &nbsp; else yield full;<br><br>
+&nbsp; }<br><br>
+}<br><br>
+<br><br>
+function transform(html) {<br><br>
+&nbsp; const $ = cheerio.load(html, { decodeEntities: false });<br><br>
+<br><br>
+&nbsp; // 1. strip DITA-OT cruft<br><br>
+&nbsp; $('.prolog, .breadcrumb, .prefix-content').remove();<br><br>
+<br><br>
+&nbsp; // 2. convert div-tables to EDS table blocks<br><br>
+&nbsp; $('div.tablenoborder, div.table').each((_, el) =&gt; {<br><br>
+&nbsp; &nbsp; // rewrite rows to nested divs, set class="table"<br><br>
+&nbsp; });<br><br>
+<br><br>
+&nbsp; // 3. codeblock → &lt;pre&gt;&lt;code&gt;<br><br>
+&nbsp; $('code.codeblock').each((_, el) =&gt; { /* ... */ });<br><br>
+<br><br>
+&nbsp; // 4. note variants → semantic block classes<br><br>
+&nbsp; $('div.note').each((_, el) =&gt; {<br><br>
+&nbsp; &nbsp; const variant = ($(el).attr('class') || '')<br><br>
+&nbsp; &nbsp; &nbsp; .match(/note_(warning|tip|caution|important)/)?.[1];<br><br>
+&nbsp; &nbsp; $(el).attr('class', variant || 'note');<br><br>
+&nbsp; });<br><br>
+<br><br>
+&nbsp; // 5. inline span normalization<br><br>
+&nbsp; $('span.uicontrol').each((_, el) =&gt; $(el).replaceWith(`&lt;b&gt;${$(el).html()}&lt;/b&gt;`));<br><br>
+&nbsp; $('span.filepath').each((_, el) =&gt; $(el).replaceWith(`&lt;code&gt;${$(el).html()}&lt;/code&gt;`));<br><br>
+<br><br>
+&nbsp; // 6. unwrap structural divs/spans<br><br>
+&nbsp; $('div, span').each((_, el) =&gt; {<br><br>
+&nbsp; &nbsp; const cls = $(el).attr('class');<br><br>
+&nbsp; &nbsp; if (!cls || !KEEP_CLASSES.has(cls)) {<br><br>
+&nbsp; &nbsp; &nbsp; // unwrap if it has no semantic value<br><br>
+&nbsp; &nbsp; }<br><br>
+&nbsp; });<br><br>
+<br><br>
+&nbsp; // 7. wrap body in the helix-html2md magic shape<br><br>
+&nbsp; const body = $('body').html();<br><br>
+&nbsp; $('body').html(`&lt;main&gt;&lt;div&gt;${body}&lt;/div&gt;&lt;/main&gt;`);<br><br>
+<br><br>
+&nbsp; return $.html();<br><br>
+}<br><br>
+<br><br>
+for await (const file of walk(DOCS_DIR)) {<br><br>
+&nbsp; if (!/\.html?$/.test(file)) continue;<br><br>
+&nbsp; const cleaned = transform(await readFile(file, 'utf8'));<br><br>
+&nbsp; const outPath = file.replace(/\.htm$/, '.html');<br><br>
+&nbsp; await writeFile(outPath, cleaned);<br><br>
+&nbsp; if (outPath !== file) await unlink(file);<br><br>
+}<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></code></div><div class="itemgroup info"><span class="prefix-content">ADDITIONAL INFORMATION: </span><div class="tip note" data-attr-type="tip"><div><div><span class="prefix-content">Tip: </span><span>Test the script locally against a representative DITA-OT HTML file before committing it. Run </span><code class="ph codeph display-inline">node scripts/transform-dita.mjs</code><span> from the repository root and inspect the resulting file with a browser to confirm the output looks correct.</span></div></div></div></div></li><li class="li step"><span class="ph cmd display-inline">Commit and push both files.</span><div class="itemgroup stepxmp"><code class="language-bash pre-white-space pre codeblock display-block" data-attr-outputclass="language-bash" data-attr-xml:space="preserve">git add .github/workflows/transform-dita.yml scripts/transform-dita.mjs<br><br>
+git commit -m "Add DITA HTML transform Action"<br><br>
+git push<br><br><br><br></code></div></li><li class="li step"><span class="ph cmd display-inline">Trigger a test publish from AEM Guides and watch the Action run in the <span class="ph uicontrol display-inline">Actions</span> tab of the GitHub repository.</span><div class="itemgroup info"><span class="prefix-content">ADDITIONAL INFORMATION: </span>On a successful run you will see two commits land on <code class="ph codeph display-inline">main</code>: first the <code class="ph codeph display-inline">Publishing for franklin</code> commit from the microservice (with raw DITA-OT HTML), and seconds later a <code class="ph codeph display-inline">Clean DITA HTML for EDS rendering</code> commit from the Action.</div></li></ol><div class="section result"><span class="prefix-content">Result</span><div class="p"><div><div><span>Every map publish now flows through the transform automatically. The HTML that aem.live ingests is in the </span><code class="ph codeph display-inline">&lt;main&gt;&lt;div&gt;…&lt;/div&gt;&lt;/main&gt;</code><span> shape, DITA-OT cruft is gone, and tables, notes, and code blocks are normalized to clean EDS-friendly markup.</span></div></div></div></div><div id="before-after-snippet" class="example"><h2 class="title">Before and after — note element example</h2><div class="p"><div><div><span>Before the transform, DITA-OT emits a warning note like this:</span></div></div></div><code class="language-html pre-white-space pre codeblock display-block" data-attr-outputclass="language-html" data-attr-xml:space="preserve">&lt;div class="note note_warning"&gt;<br><br>
+&nbsp; &lt;span class="note__title"&gt;Warning&lt;/span&gt;<br><br>
+&nbsp; Do not delete fstab.yaml.<br><br>
+&lt;/div&gt;<br><br><br><br><br><br></code><div class="p"><div><div><span>After the transform, the same content is:</span></div></div></div><code class="language-html pre-white-space pre codeblock display-block" data-attr-outputclass="language-html" data-attr-xml:space="preserve">&lt;div class="warning"&gt;Do not delete fstab.yaml.&lt;/div&gt;</code><div class="p"><div><div><span>aem.live then renders that as the POP-branded Warning block defined in </span><span class="ph filepath display-inline">/blocks/warning/</span><span>.</span></div></div></div></div><div class="section postreq"><span class="prefix-content">AFTER COMPLETING THE TASK</span><div class="p"><div><div><span>You are now ready to publish actual DITA content. Continue with </span><a class="xref" title="A publish profile holds the credentials AEM Guides uses to commit to your GitHub repository. An output preset binds that profile to a specific ditamap. This task walks through creating both, with a workaround for the OAuth UI bug that affects Chromium-based browsers." href="configure-a-publish-profile-and-output-preset" data-attr-href="configure-a-publish-profile-and-output-preset.dita" data-attr-type="task">Configure a publish profile and output preset</a><span>.</span></div></div></div></div><div class="related-links"><div><div><span class="prefix-content">Related information</span><a class="link" href="https://github.com/adobe/helix-html2md" data-attr-format="html" data-attr-href="https://github.com/adobe/helix-html2md" data-attr-scope="external" target="_blank"><span class="linktext display-inline">helix-html2md on GitHub</span></a><a class="link" href="https://cheerio.js.org/" data-attr-format="html" data-attr-href="https://cheerio.js.org/" data-attr-scope="external" target="_blank"><span class="linktext display-inline">cheerio documentation</span></a></div></div></div></body></html>
