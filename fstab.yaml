@@ -1,7 +1,8 @@
-# A mountpoint is required by aem.live for site registration. We point an
-# unused path at the dita-franklin-worker so all REAL traffic (/, /foo,
-# /contents/...) falls through to the repo's markdown files.
+# Mount this same repo's /docs/ folder served via GitHub Pages.
+# AEM Guides publishes DITA-OT HTML into /docs/; GitHub Pages auto-deploys
+# /docs/ to the cole20444.github.io/pop-eds-md/ URL; aem.live fetches HTML
+# from there and runs its standard html2md → content-bus pipeline.
 mountpoints:
-  /_unused:
-    url: https://dita-franklin-worker.adobeaem.workers.dev/cole20444/pop-eds-md/main/docs
+  /:
+    url: https://cole20444.github.io/pop-eds-md/
     type: markup
