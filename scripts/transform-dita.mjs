@@ -261,8 +261,10 @@ function transform(html) {
   });
 
   // ── 11. Emit cleaned HTML doc ──────────────────────────────────────
-  // No explicit <main> wrapper — aem.live's html2md works best on standard
-  // body content (it adds the EDS frame itself).
+  // aem.live's html2md (designed around Google-Docs-style published HTML)
+  // looks for content inside a wrapping <div>, not as direct children of
+  // <body>. Wrap once so the converter recognizes our content as the
+  // page's section.
   const bodyHtml = $body.html() || '';
 
   return [
@@ -272,7 +274,9 @@ function transform(html) {
     `<title>${pageTitle}</title>`,
     '</head>',
     '<body>',
+    '<div>',
     bodyHtml.trim(),
+    '</div>',
     '</body>',
     '</html>',
     '',
