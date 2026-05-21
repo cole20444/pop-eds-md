@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**.htm'
+      - 'docs/**.html'
       - 'scripts/transform-dita.mjs'
       - '.github/workflows/transform-dita.yml'
 

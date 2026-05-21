@@ -32,7 +32,9 @@ const KEEP_BLOCK_TAGS = new Set([
 ]);
 
 /**
- * Recursively find .htm files under a directory.
+ * Recursively find .htm and .html files under a directory.
+ * (Both, so re-running the Action against already-cleaned .html output
+ * remains idempotent — important if we update the transform rules later.)
  */
 async function findHtmFiles(dir) {
   const out = [];
@@ -40,7 +42,7 @@ async function findHtmFiles(dir) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
       out.push(...await findHtmFiles(full));
-    } else if (entry.isFile() && entry.name.endsWith('.htm')) {
+    } else if (entry.isFile() && (entry.name.endsWith('.htm') || entry.name.endsWith('.html'))) {
       out.push(full);
     }
   }
@@ -298,10 +300,22 @@ async function main() {
     // Always write to .html and delete the .htm source — aem.live appends no
     // extension when fetching from our GitHub Pages mountpoint, and Pages
     // resolves extension-less URLs to .html (but not .htm).
-    const htmlPath = file.replace(/\.htm$/, '.html');
+    const htmlPath = file.endsWith('.html')
+      ? file
+      : file.replace(/\.htm$/, '.html');
+
+    if (cleaned === original && htmlPath === file) {
+      console.log(`· ${relative('.', file)} (no change)`);
+      continue;
+    }
+
     await writeFile(htmlPath, cleaned);
-    await unlink(file);
-    console.log(`✓ ${relative('.', file)} → ${relative('.', htmlPath)}`);
+    if (htmlPath !== file) {
+      await unlink(file);
+      console.log(`✓ ${relative('.', file)} → ${relative('.', htmlPath)}`);
+    } else {
+      console.log(`✓ ${relative('.', file)}`);
+    }
     changed += 1;
   }
 
