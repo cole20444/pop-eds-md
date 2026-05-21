@@ -1,27 +1,35 @@
 // Transforms DITA-OT HTML output into clean semantic HTML that aem.live's
-// html2md can convert into useful markdown for EDS rendering.
+// helix-html2md will accept and convert to useful markdown.
 //
-// Walks /docs/ recursively and rewrites each .htm file in place. Original
-// versions remain in git history if you need them.
+// Walks /docs/ recursively and rewrites each .htm/.html file in place.
+// Originals remain in git history.
+//
+// helix-html2md REQUIRES this exact shape (verified against the lib source
+// at github.com/adobe/helix-html2md src/html2md.js):
+//   <main>
+//     <div>...semantic content...</div>
+//   </main>
+// • If there's no <main>, html2md returns an empty string.
+// • createSections() removes any non-<div> direct children of <main>.
+// • The first <div> inside <main> is unwrapped (its children become the
+//   first "section").
 //
 // Run locally:  node scripts/transform-dita.mjs
 // Runs in CI:   .github/workflows/transform-dita.yml
 
-import { readdir, readFile, writeFile, stat, unlink } from 'node:fs/promises';
+import {
+  readdir, readFile, writeFile, stat, unlink,
+} from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import * as cheerio from 'cheerio';
 
 const ROOT = 'docs';
 
-// Inline tags we keep when extracting paragraph-content from a DITA wrapper.
-// Block-level tags (div, section, etc.) are unwrapped — we grab their inner
-// content and continue.
 const INLINE_TAGS = new Set([
   'a', 'abbr', 'b', 'br', 'cite', 'code', 'em', 'i', 'kbd', 'mark',
   'q', 's', 'samp', 'small', 'span', 'strong', 'sub', 'sup', 'u', 'var',
 ]);
 
-// Block tags we leave intact (we don't recursively unwrap their children).
 const KEEP_BLOCK_TAGS = new Set([
   'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
   'p', 'ul', 'ol', 'li', 'dl', 'dt', 'dd',
@@ -31,11 +39,6 @@ const KEEP_BLOCK_TAGS = new Set([
   'hr',
 ]);
 
-/**
- * Recursively find .htm and .html files under a directory.
- * (Both, so re-running the Action against already-cleaned .html output
- * remains idempotent — important if we update the transform rules later.)
- */
 async function findHtmFiles(dir) {
   const out = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -49,12 +52,15 @@ async function findHtmFiles(dir) {
   return out;
 }
 
-/**
- * Take a DITA wrapper (e.g. div.shortdesc or div.p whose content is wrapped
- * in N levels of <div>/<span>) and return a string of clean inline HTML,
- * suitable for wrapping in a <p>. Recursively unwraps block-level
- * containers but preserves inline elements like <a> and <code>.
- */
+function cleanAttrs($el) {
+  const drop = [
+    'class', 'id', 'data-attr-href', 'data-attr-scope', 'data-attr-type',
+    'data-attr-format', 'data-attr-outputclass', 'data-attr-xml:space',
+    'title', 'xmlns', 'lang',
+  ];
+  drop.forEach((a) => $el.removeAttr(a));
+}
+
 function extractInline($, $el, topLevel = true) {
   const parts = [];
   $el.contents().each((_, child) => {
@@ -65,90 +71,126 @@ function extractInline($, $el, topLevel = true) {
     if (child.type !== 'tag') return;
     const tag = child.tagName.toLowerCase();
 
-    // Inline element with no DITA class: unwrap (it's just a noise wrapper)
     if (tag === 'span' && !$(child).attr('class')) {
       parts.push(extractInline($, $(child), false));
       return;
     }
-
-    // Block wrapper: dig in for inline content
     if (!INLINE_TAGS.has(tag) && !KEEP_BLOCK_TAGS.has(tag)) {
       parts.push(extractInline($, $(child), false));
       return;
     }
-
-    // Keep the element. Clone with cheerio so attribute cleanup runs.
     const $clone = $(child).clone();
     cleanAttrs($clone);
     parts.push($.html($clone));
   });
   const joined = parts.join('');
-  // Only normalize whitespace at the top level so we don't eat inner spaces
-  // that are meaningful (e.g. the trailing space before a link).
   return topLevel ? joined.replace(/\s+/g, ' ').trim() : joined;
 }
 
 /**
- * Strip DITA-specific attributes from an element (and its descendants for
- * the few attrs we expect on inline children like <a>).
+ * Convert DITA-OT's <code class="...codeblock... pre ..."> to a proper
+ * <pre><code class="language-X">…</code></pre>. DITA-OT uses inline <code>
+ * with class-based block styling, <br> for newlines (often doubled), and
+ * &nbsp; for indentation.
  */
-function cleanAttrs($el) {
-  const dropAttrs = [
-    'class', 'id', 'data-attr-href', 'data-attr-scope', 'data-attr-type',
-    'title', 'xmlns',
-  ];
-  dropAttrs.forEach((attr) => $el.removeAttr(attr));
-  $el.find('*').each((_, c) => {
-    const $c = (typeof c === 'object' ? require('cheerio') : null);
-    dropAttrs.forEach((attr) => {
-      if (c.attribs && attr in c.attribs) delete c.attribs[attr];
+function rewriteCodeblocks($) {
+  $('code.codeblock, code[data-attr-outputclass]').each((_, el) => {
+    const $el = $(el);
+    const outputclass = $el.attr('data-attr-outputclass') || '';
+    const lang = (outputclass.match(/language-[\w-]+/) || [])[0]
+      || ($el.attr('class') || '').split(/\s+/).find((c) => c.startsWith('language-'))
+      || '';
+
+    // Reduce <br><br> pairs → single newline (DITA-OT doubles them)
+    $el.find('br').each((__, brEl) => {
+      const $br = $(brEl);
+      const next = brEl.next;
+      if (next && next.type === 'tag' && next.tagName === 'br') {
+        $br.replaceWith('\n');
+        $(next).remove();
+      } else {
+        $br.replaceWith('\n');
+      }
     });
+
+    // Get text content (so &nbsp; become normal spaces, etc.)
+    let text = $el.text().replace(/ /g, ' ');
+    // DITA-OT emits <br><br> AND a literal newline in source for each
+    // codeblock line. After <br>->\n replacement we have \n\n. Collapse
+    // any run of newlines (with only whitespace between) into one.
+    text = text.replace(/\n\s*\n/g, '\n');
+    // Trim leading newline and trailing whitespace/newlines.
+    text = text.replace(/^\n+/, '').replace(/[\s\n]+$/, '');
+
+    const codeAttr = lang ? ` class="${lang}"` : '';
+    $el.replaceWith(`<pre><code${codeAttr}>${text}</code></pre>`);
   });
 }
 
 /**
- * Replace a DITA "note" admonition (warning/note/tip/etc.) with an
- * EDS-style block table.  When aem.live's html2md runs, this becomes:
- *   | Warning |
- *   | --- |
- *   | text  |
- * which EDS renders as <div class="warning">…</div>, activating any
- * /blocks/warning/ block we ship.
+ * DITA-OT renders tables as nested <div>s (class="table-headcount-N") not
+ * real <table>s. Convert to a proper <table>; first row becomes <thead>.
+ */
+function rewriteDitaTables($) {
+  $('div[class*="table-headcount"], div.table').each((_, el) => {
+    const $el = $(el);
+    // Each direct-child div is a row; each grandchild div is a cell.
+    const $rows = $el.children('div');
+    if (!$rows.length) return;
+
+    const tableRows = [];
+    $rows.each((idx, rowEl) => {
+      const cells = [];
+      $(rowEl).children('div').each((__, cellEl) => {
+        cells.push($(cellEl).html() || '');
+      });
+      if (cells.length) tableRows.push({ idx, cells });
+    });
+    if (!tableRows.length) return;
+
+    const [head, ...rest] = tableRows;
+    const thead = `<thead><tr>${head.cells.map((c) => `<th>${c}</th>`).join('')}</tr></thead>`;
+    const tbody = `<tbody>${
+      rest.map((r) => `<tr>${r.cells.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')
+    }</tbody>`;
+
+    $el.replaceWith(`<table>${thead}${tbody}</table>`);
+  });
+}
+
+/**
+ * Replace DITA-OT note blocks with EDS-style block tables.
+ *   <table><tr><th>Warning</th></tr><tr><td>…body…</td></tr></table>
+ * html2md converts this to a markdown block table that EDS renders as
+ * <div class="warning"> on the page, activating /blocks/warning/.
  */
 function rewriteNotes($) {
   $('div.note').each((_, el) => {
     const $el = $(el);
 
     let blockName = 'Note';
-    if ($el.hasClass('note_warning') || $el.hasClass('warning')) blockName = 'Warning';
-    else if ($el.hasClass('note_tip') || $el.hasClass('tip')) blockName = 'Tip';
-    else if ($el.hasClass('note_caution') || $el.hasClass('caution')) blockName = 'Caution';
-    else if ($el.hasClass('note_important') || $el.hasClass('important')) blockName = 'Important';
+    // DITA-OT classes: just "note" for default; "warning note" / "tip note" etc. for typed
+    if ($el.hasClass('warning') || $el.hasClass('note_warning')) blockName = 'Warning';
+    else if ($el.hasClass('tip') || $el.hasClass('note_tip')) blockName = 'Tip';
+    else if ($el.hasClass('caution') || $el.hasClass('note_caution')) blockName = 'Caution';
+    else if ($el.hasClass('important') || $el.hasClass('note_important')) blockName = 'Important';
+    else if ($el.hasClass('remember') || $el.hasClass('note_remember')) blockName = 'Remember';
+    else if ($el.hasClass('attention') || $el.hasClass('note_attention')) blockName = 'Attention';
 
-    // Body content: prefer .note__content if DITA-OT added it, otherwise
-    // strip the title span and use what's left as inline content.
-    const $content = $el.find('.note__content, .notebody').first();
-    const bodyHtml = $content.length
-      ? extractInline($, $content)
-      : (() => {
-        const $clone = $el.clone();
-        $clone.find('.note__title, .notetitle').remove();
-        return extractInline($, $clone);
-      })();
+    // Strip the DITA-OT "Note: " / "Warning: " label and any title spans
+    $el.find('span.prefix-content, .note__title, .notetitle').remove();
 
+    const bodyHtml = extractInline($, $el);
     $el.replaceWith(
       `<table><tr><th>${blockName}</th></tr><tr><td>${bodyHtml}</td></tr></table>`,
     );
   });
 }
 
-/**
- * Apply the full transform pipeline to one HTML string.
- */
 function transform(html) {
   const $ = cheerio.load(html, { decodeEntities: false });
 
-  // ── 1. Pull a usable page title ────────────────────────────────────
+  // ── 1. Page title ──────────────────────────────────────────────────
   let pageTitle = ($('head > title').text() || '').trim();
   if (!pageTitle) {
     pageTitle = ($('body h1, body h1.title').first().text() || '').trim();
@@ -157,82 +199,95 @@ function transform(html) {
   const $body = $('body').first();
   if (!$body.length) return html;
 
-  // ── 2. Drop noise ──────────────────────────────────────────────────
-  $body.find('link').remove();                              // _rhdefault.css etc.
-  $body.find('div.breadcrumbs, div.familylinks').remove();  // we'll provide nav via EDS
+  // ── 2. Drop noise that DITA-OT injects ────────────────────────────
+  $body.find('link').remove();
+  $body.find('div.breadcrumbs, div.familylinks').remove();
+
+  // The "Prolog information" block (author, metadata, keywords as visible body content)
+  $body.find('div.collapsible-tags, div.prolog').remove();
+
+  // All visible DITA-OT labels: "Note: ", "Warning: ", "PREREQUISITE ",
+  // "ADDITIONAL INFORMATION: ", "STEP RESULT: ", "AFTER COMPLETING THE TASK", etc.
+  $body.find('span.prefix-content').remove();
+
   $body.removeAttr('id').removeAttr('class').removeAttr('lang');
 
-  // Idempotency: if a previous run already wrapped content in <main>, unwrap
-  // so we don't end up with <main><main>…</main></main>.
+  // Idempotency: unwrap any prior <main> wrappers
   $body.find('main').each((_, el) => {
     const $el = $(el);
     $el.replaceWith($el.contents());
   });
 
-  // ── 3. EDS-block structures (do these first to preserve them) ──────
-
+  // ── 3. EDS-block / structural rewrites FIRST (before unwrap step) ─
+  rewriteCodeblocks($);
+  rewriteDitaTables($);
   rewriteNotes($);
 
-  // div.codeblock > pre  →  <pre>
-  $body.find('div.codeblock, div.fig.codeblock').each((_, el) => {
-    const $el = $(el);
-    const $pre = $el.find('pre').first();
-    if ($pre.length) $el.replaceWith($pre);
-  });
-
-  // ── 4. Headings: <h1 class="title"> → <h1> (and friends) ───────────
+  // ── 4. Headings: drop classes ─────────────────────────────────────
   $body.find('h1, h2, h3, h4, h5, h6').each((_, el) => {
     $(el).removeAttr('class').removeAttr('id');
   });
 
-  // ── 5. DITA paragraph wrappers ─────────────────────────────────────
-  // div.shortdesc / div.p — DITA-OT wraps content in nested divs around
-  // a span of text. Extract the inline content cleanly and wrap in <p>.
+  // ── 5. DITA paragraph wrappers → <p> ──────────────────────────────
   $body.find('div.shortdesc, div.p, div.lq').each((_, el) => {
     const $el = $(el);
     const inline = extractInline($, $el);
     $el.replaceWith(inline ? `<p>${inline}</p>` : '');
   });
 
-  // div.section — promote children up (no wrapper needed)
+  // div.section → unwrap (promote children up)
   $body.find('div.section').each((_, el) => {
     const $el = $(el);
     $el.replaceWith($el.contents());
   });
 
-  // ── 6. Step lists ──────────────────────────────────────────────────
-  $body.find('ol.steps, ol.steps-unordered, ul.steps-unordered').removeAttr('class');
-  $body.find('li.step, li.substep, li.stepxmp, li.choice').each((_, el) => {
+  // ── 6. Step lists & task structures ───────────────────────────────
+  $body.find('ol.steps, ol.substeps, ul.choices, ul.steps-unordered').removeAttr('class');
+  $body.find('li.step, li.substep, li.choice, li.stepxmp').each((_, el) => {
     const $el = $(el);
     $el.removeAttr('class');
-    // Unwrap span.cmd / span.info wrappers that DITA-OT loves
+    // span.cmd / span.info / span.itemgroup wrap step contents — unwrap them
     $el.find('span.cmd, span.info, span.itemgroup').each((__, span) => {
       const $span = $(span);
       $span.replaceWith($span.contents());
     });
   });
-
-  // ── 7. Cross-references and inline span wrappers ───────────────────
-  $body.find('a').each((_, el) => {
-    const $a = $(el);
-    ['class', 'data-attr-href', 'data-attr-scope', 'data-attr-type', 'title']
-      .forEach((attr) => $a.removeAttr(attr));
+  // div.itemgroup (info, stepresult, etc.): unwrap; their label was already
+  // stripped via span.prefix-content
+  $body.find('div.itemgroup').each((_, el) => {
+    const $el = $(el);
+    $el.replaceWith($el.contents());
   });
 
-  $body.find('span.ph, span.keyword, span.uicontrol, span.term, span.wintitle, span.menucascade')
-    .each((_, el) => $(el).removeAttr('class'));
+  // ── 7. Inline DITA elements ───────────────────────────────────────
+  // filepath: monospace text → <code>
+  $body.find('span.filepath, span.ph.filepath').each((_, el) => {
+    const $el = $(el);
+    const text = $el.text();
+    $el.replaceWith(`<code>${text}</code>`);
+  });
+  // uicontrol: bold UI label → <b>
+  $body.find('span.uicontrol, span.ph.uicontrol').each((_, el) => {
+    const $el = $(el);
+    const inner = $el.html() || '';
+    $el.replaceWith(`<b>${inner}</b>`);
+  });
 
-  // ── 8. Strip residual class/id on non-table elements ───────────────
+  // ── 8. Cross-references and other anchors ─────────────────────────
+  $body.find('a').each((_, el) => {
+    const $a = $(el);
+    ['class', 'data-attr-href', 'data-attr-scope', 'data-attr-type',
+      'data-attr-format', 'title'].forEach((attr) => $a.removeAttr(attr));
+  });
+
+  // ── 9. Strip residual class/id (leave table structure intact) ─────
   $body.find('[class], [id]').each((_, el) => {
     const tag = el.tagName.toLowerCase();
-    // Tables encode EDS blocks; keep their structure.
     if (['table', 'thead', 'tbody', 'tr', 'th', 'td'].includes(tag)) return;
     $(el).removeAttr('class').removeAttr('id');
   });
 
-  // ── 9. Aggressive recursive unwrap of class-less <div> and <span> ──
-  // After classes are stripped, almost every DITA <div> is just noise.
-  // Unwrap until the tree is stable.
+  // ── 10. Aggressive recursive unwrap of class-less <div>/<span> ────
   let changed = true;
   while (changed) {
     changed = false;
@@ -240,32 +295,19 @@ function transform(html) {
       const $el = $(el);
       const tag = el.tagName.toLowerCase();
       if ($el.attr('class') || $el.attr('id')) return;
-      // Don't unwrap divs inside tables — they preserve cell structure.
-      if ($el.closest('table').length) return;
-      // For span: always unwrap class-less span (its content is inline)
-      // For div: unwrap if its children would be valid where the div was
-      //          (we'll let cheerio handle DOM validity)
-      if (tag === 'span' || tag === 'div') {
-        $el.replaceWith($el.contents());
-        changed = true;
-      }
+      if ($el.closest('table').length) return; // preserve table internals
+      $el.replaceWith($el.contents());
+      changed = true;
     });
   }
 
-  // ── 10. Cleanup: drop empty paragraphs and divs ────────────────────
+  // ── 11. Drop empty paragraphs/divs ────────────────────────────────
   $body.find('p, div').each((_, el) => {
     const $el = $(el);
-    if (!$el.text().trim() && $el.children().length === 0) {
-      $el.remove();
-    }
+    if (!$el.text().trim() && $el.children().length === 0) $el.remove();
   });
 
-  // ── 11. Emit cleaned HTML doc ──────────────────────────────────────
-  // aem.live's helix-html2md REQUIRES:
-  //   1. A <main> element at the top level (returns empty string if absent)
-  //   2. Content wrapped in <div>(s) as direct children of <main> — bare
-  //      <h1>/<p> siblings of <div> get stripped by createSections()
-  // Source: github.com/adobe/helix-html2md src/html2md.js
+  // ── 12. Emit cleaned HTML doc in helix-html2md magic shape ────────
   const bodyHtml = $body.html() || '';
 
   return [
@@ -296,7 +338,7 @@ async function main() {
 
   const files = await findHtmFiles(ROOT);
   if (files.length === 0) {
-    console.log(`No .htm files under '${ROOT}/'.`);
+    console.log(`No .htm / .html files under '${ROOT}/'.`);
     return;
   }
 
@@ -304,12 +346,7 @@ async function main() {
   for (const file of files) {
     const original = await readFile(file, 'utf8');
     const cleaned = transform(original);
-    // Always write to .html and delete the .htm source — aem.live appends no
-    // extension when fetching from our GitHub Pages mountpoint, and Pages
-    // resolves extension-less URLs to .html (but not .htm).
-    const htmlPath = file.endsWith('.html')
-      ? file
-      : file.replace(/\.htm$/, '.html');
+    const htmlPath = file.endsWith('.html') ? file : file.replace(/\.htm$/, '.html');
 
     if (cleaned === original && htmlPath === file) {
       console.log(`· ${relative('.', file)} (no change)`);
