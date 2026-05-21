@@ -1,28 +1,41 @@
+/*
+ * Default note block.  Other note variants (warning, tip, caution, important)
+ * each have their own /blocks/<name>/ folder using the same shape.
+ *
+ * Source markup (post helix-html2md):
+ *   <div class="note">
+ *     <div><div>body content</div></div>
+ *   </div>
+ */
+
 .note {
-    background: var(--note-block-bg-color);
-    padding: 18px 24px;
-    border-left: 4px solid var(--note-block-border-color);
-    margin-bottom: 1em;
-    font-size: 14px;
+  display: flex;
+  gap: 0.75rem;
+  margin: var(--pop-block-gap) 0;
+  padding: var(--pop-block-pad-y) var(--pop-block-pad-x);
+  border: 1px solid var(--pop-note-ring);
+  border-left-width: 4px;
+  border-radius: var(--pop-block-radius);
+  background: var(--pop-note-tint);
+  color: var(--text-color);
+  font-size: var(--body-font-size-xs);
+  line-height: 1.5;
 }
 
-.note.caution {
-    border-radius: 0.25rem;
-    border: 1px solid var(--note-caution-border-color);
-    background: var(--note-caution-bg-color);
+.note::before {
+  content: "ⓘ";
+  flex: 0 0 auto;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  color: var(--pop-note-ring);
+  font-weight: 700;
 }
 
-.note.hazardstatement, .note.danger {
-    border-radius: 0.25rem;
-    border: 1px solid var(--note-hazard-border-color);
-    background: var(--note-hazard-bg-color);
+.note > div {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.hazardstatement > div:first-child > div > p::before {
-    content: url("./hazard-note.svg");
-    margin-right: 0.5rem;
-}
-
-.note.my-custom-class {
-    background: green;
-}
+.note p { margin: 0; }
+.note p + p { margin-top: 0.5em; }
+.note a { color: var(--pop-note-ring); text-decoration: underline; }
