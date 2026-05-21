@@ -57,6 +57,27 @@ function buildAutoBlocks(main) {
 }
 
 /**
+ * Inject the sidenav block. AEM Guides Generate Output writes
+ * /blocks/sidenav/sidenav.js + sidenav_data.js with the ditamap tree baked
+ * in; we just need to add the container/block elements so EDS picks them up.
+ * @param {Element} main
+ */
+function injectSidenav(main) {
+  if (main.querySelector('.sidenav')) return;
+
+  const section = document.createElement('div');
+  section.classList.add('sidenav-container');
+
+  const inner = document.createElement('div');
+  const block = document.createElement('div');
+  block.classList.add('sidenav');
+  inner.appendChild(block);
+  section.appendChild(inner);
+
+  main.prepend(section);
+}
+
+/**
  * Decorates the main element.
  * @param {Element} main The main element
  */
@@ -64,6 +85,7 @@ function buildAutoBlocks(main) {
 export function decorateMain(main) {
   // hopefully forward compatible button decoration
   // decorateButtons(main);
+  injectSidenav(main);
   decorateIcons(main);
   // buildAutoBlocks(main);
   decorateSections(main);
