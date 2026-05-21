@@ -160,6 +160,83 @@ function rewriteDitaTables($) {
 }
 
 /**
+ * Drop draft-only DITA annotations so they never reach production. The
+ * DITA-OT processing setting can also exclude these but doing it here is
+ * belt-and-braces (our microservice config doesn't expose the setting).
+ *
+ *   <draft-comment>      → DITA-OT renders as <div class="draft-comment">
+ *   <required-cleanup>   → DITA-OT renders as <div class="required-cleanup">
+ */
+function stripDrafts($) {
+  $('div.draft-comment, div.required-cleanup').remove();
+}
+
+/**
+ * DITA-OT may emit simpletable / choicetable / (newer DITA-OT) full CALS
+ * tables as real <table> elements with a recognizable class. aem.live
+ * consumes any <table> it sees as a markdown block named after the first
+ * cell — same problem that drives our div-based wrapping for
+ * div.table-headcount. Wrap each of these tables in <div class="table"> so
+ * the resulting EDS block name is the literal "table" instead of the
+ * header text.
+ *
+ * Must run BEFORE rewriteNotes — that step intentionally creates <table>
+ * elements (one per note) that we want to leave alone.
+ */
+function rewriteRealTables($) {
+  $('table.simpletable, table.simpletableborder, table.choicetable, table.choicetableborder').each((_, el) => {
+    const $el = $(el);
+    const rows = [];
+    $el.find('tr').each((_idx, rowEl) => {
+      const cells = [];
+      $(rowEl).children('th, td').each((__, cellEl) => {
+        cells.push($(cellEl).html() || '');
+      });
+      if (cells.length) rows.push(cells);
+    });
+    if (!rows.length) return;
+    const rowsHtml = rows
+      .map((cells) => `<div>${cells.map((c) => `<div>${c}</div>`).join('')}</div>`)
+      .join('');
+    $el.replaceWith(`<div class="table">${rowsHtml}</div>`);
+  });
+}
+
+/**
+ * Convert DITA-OT <div class="fig"> to a semantic <figure>/<figcaption>.
+ * helix-html2md preserves figure/figcaption as a markdown image plus an
+ * italicized caption line.
+ *
+ * Typical DITA-OT structure:
+ *   <div class="fig fignone">
+ *     <span class="fig--title">...labels + title text...</span>
+ *     <img />
+ *     <span class="figdesc">desc text</span>
+ *   </div>
+ *
+ * Older variant uses <p class="figcap"> for the title.
+ */
+function rewriteFigs($) {
+  $('div.fig').each((_, el) => {
+    const $el = $(el);
+    const titleText = (
+      $el.find('.fig--title-text, span.figtitle').first().text()
+      || $el.find('.figcap').first().text()
+      || ''
+    ).trim();
+    const $img = $el.find('img').first();
+    if (!$img.length) {
+      // No image; fall back to plain unwrap so any other content survives.
+      $el.replaceWith($el.contents());
+      return;
+    }
+    const imgHtml = $.html($img);
+    const captionHtml = titleText ? `<figcaption>${titleText}</figcaption>` : '';
+    $el.replaceWith(`<figure>${imgHtml}${captionHtml}</figure>`);
+  });
+}
+
+/**
  * Replace DITA-OT note blocks with EDS-style block tables.
  *   <table><tr><th>Warning</th></tr><tr><td>…body…</td></tr></table>
  * html2md converts this to a markdown block table that EDS renders as
@@ -207,6 +284,9 @@ function transform(html) {
   // The "Prolog information" block (author, metadata, keywords as visible body content)
   $body.find('div.collapsible-tags, div.prolog').remove();
 
+  // Draft-only DITA annotations — never ship to production.
+  stripDrafts($);
+
   // All visible DITA-OT labels: "Note: ", "Warning: ", "PREREQUISITE ",
   // "ADDITIONAL INFORMATION: ", "STEP RESULT: ", "AFTER COMPLETING THE TASK", etc.
   $body.find('span.prefix-content').remove();
@@ -220,8 +300,13 @@ function transform(html) {
   });
 
   // ── 3. EDS-block / structural rewrites FIRST (before unwrap step) ─
+  // Order matters: rewriteRealTables converts simpletable/choicetable to
+  // <div class="table"> wrappers and MUST run before rewriteNotes (which
+  // creates its own <table> elements that we want to leave alone).
   rewriteCodeblocks($);
   rewriteDitaTables($);
+  rewriteRealTables($);
+  rewriteFigs($);
   rewriteNotes($);
 
   // ── 4. Headings: drop classes ─────────────────────────────────────
