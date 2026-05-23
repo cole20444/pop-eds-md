@@ -95,3 +95,77 @@ test('no changes → all categories empty', () => {
   assert.equal(diff.proposeAdd.length, 0);
   assert.equal(diff.deprecated.length, 0);
 });
+
+// ---------------------------------------------------------------------------
+// diffComponents tests
+// ---------------------------------------------------------------------------
+
+import { diffComponents } from '../diff.mjs';
+
+const BASE_COMPS = {
+  Warning: {
+    blockFolder: 'blocks/warning',
+    properties: {
+      'border-color': 'var(--pop-warning-ring)',
+      'border-radius': 'var(--pop-block-radius)',
+    },
+  },
+};
+
+test('component property: FIGMA changed, CODE unchanged → apply', () => {
+  const figma = {
+    Warning: {
+      blockFolder: 'blocks/warning',
+      properties: {
+        'border-color': '#FF0000',
+        'border-radius': 'var(--pop-block-radius)',
+      },
+    },
+  };
+  const codeByBlock = {
+    Warning: {
+      'border-color': 'var(--pop-warning-ring)',
+      'border-radius': 'var(--pop-block-radius)',
+    },
+  };
+  const diff = diffComponents(BASE_COMPS, figma, codeByBlock);
+  assert.equal(diff.apply.length, 1);
+  assert.deepEqual(diff.apply[0], {
+    component: 'Warning',
+    blockFolder: 'blocks/warning',
+    property: 'border-color',
+    from: 'var(--pop-warning-ring)',
+    to: '#FF0000',
+  });
+});
+
+test('component property: drift surfaces but no apply', () => {
+  const figma = BASE_COMPS;
+  const codeByBlock = {
+    Warning: {
+      'border-color': '#000',
+      'border-radius': 'var(--pop-block-radius)',
+    },
+  };
+  const diff = diffComponents(BASE_COMPS, figma, codeByBlock);
+  assert.equal(diff.apply.length, 0);
+  assert.equal(diff.drift.length, 1);
+});
+
+test('component property: both changed → conflict', () => {
+  const figma = {
+    Warning: {
+      blockFolder: 'blocks/warning',
+      properties: { 'border-color': '#FF0000', 'border-radius': 'var(--pop-block-radius)' },
+    },
+  };
+  const codeByBlock = {
+    Warning: {
+      'border-color': '#00FF00',
+      'border-radius': 'var(--pop-block-radius)',
+    },
+  };
+  const diff = diffComponents(BASE_COMPS, figma, codeByBlock);
+  assert.equal(diff.conflict.length, 1);
+  assert.equal(diff.apply.length, 0);
+});

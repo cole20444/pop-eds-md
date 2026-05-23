@@ -60,3 +60,47 @@ function flatten(state) {
   }
   return out;
 }
+
+export function diffComponents(base, figma, codeByBlock) {
+  const result = { apply: [], drift: [], conflict: [], proposeAdd: [], deprecated: [] };
+  const allComponents = new Set([...Object.keys(base), ...Object.keys(figma)]);
+
+  for (const compName of allComponents) {
+    const baseComp = base[compName];
+    const figmaComp = figma[compName];
+
+    if (baseComp && !figmaComp) {
+      result.deprecated.push({ component: compName, blockFolder: baseComp.blockFolder });
+      continue;
+    }
+    if (!baseComp && figmaComp) {
+      result.proposeAdd.push({ component: compName, blockFolder: figmaComp.blockFolder });
+      continue;
+    }
+
+    const { blockFolder } = baseComp;
+    const codeProps = codeByBlock[compName] || {};
+    const allProps = new Set([
+      ...Object.keys(baseComp.properties),
+      ...Object.keys(figmaComp.properties),
+    ]);
+
+    for (const prop of allProps) {
+      const baseVal = baseComp.properties[prop];
+      const figmaVal = figmaComp.properties[prop];
+      const codeVal = codeProps[prop];
+
+      const figmaChanged = figmaVal !== baseVal;
+      const codeChanged = codeVal !== baseVal;
+
+      if (figmaChanged && !codeChanged) {
+        result.apply.push({ component: compName, blockFolder, property: prop, from: baseVal, to: figmaVal });
+      } else if (!figmaChanged && codeChanged) {
+        result.drift.push({ component: compName, blockFolder, property: prop, base: baseVal, code: codeVal });
+      } else if (figmaChanged && codeChanged && figmaVal !== codeVal) {
+        result.conflict.push({ component: compName, blockFolder, property: prop, base: baseVal, figma: figmaVal, code: codeVal });
+      }
+    }
+  }
+  return result;
+}
