@@ -1,0 +1,18 @@
+.warning {
+  display: flex;
+  margin: var(--pop-block-gap) 0;
+  padding: var(--pop-block-pad-y) var(--pop-block-pad-x);
+  border: 1px solid var(--pop-warning-ring);
+  border-radius: var(--pop-block-radius);
+  background: var(--pop-warning-tint);
+  font-size: var(--body-font-size-xs);
+}
+
+.warning::before {
+  content: "⚠";
+  color: var(--pop-warning-ring);
+}
+
+.warning > div {
+  flex: 1 1 auto;
+}
