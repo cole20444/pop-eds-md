@@ -32,3 +32,23 @@ test('parses --pop-block-* into Layout group', async () => {
   const result = parseTokens(css);
   assert.equal(result.collections['POP Brand'].groups.Layout['block-radius'].value, '8px');
 });
+
+test('parses the real styles/styles.css without errors', async () => {
+  const css = await readFile(new URL('../../../styles/styles.css', import.meta.url), 'utf8');
+  const result = parseTokens(css);
+
+  // Spot-check the known POP brand tokens from the spec
+  assert.equal(result.collections['POP Brand'].groups.Color['primary'].value, '#642CDB');
+  assert.equal(result.collections['POP Brand'].groups.Color['info'].value, '#3B82F6');
+  assert.equal(result.collections['POP Brand'].groups.Color['danger'].value, '#EF4444');
+
+  // Block tints
+  assert.equal(result.collections['POP Brand'].groups['Block tints']['note-tint'].value, '#EFF6FF');
+  assert.equal(result.collections['POP Brand'].groups['Block tints']['warning-tint'].value, '#FFFBEB');
+
+  // Layout
+  assert.equal(result.collections['POP Brand'].groups.Layout['block-radius'].value, '8px');
+
+  // Foundation
+  assert.ok(result.collections.Foundation.groups.Typography['body-font-family'].value.startsWith('Poppins'));
+});
