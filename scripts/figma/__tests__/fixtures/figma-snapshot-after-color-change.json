@@ -1,0 +1,15 @@
+{
+  "versionId": "v2",
+  "variables": {
+    "POP Brand": {
+      "Color/primary": { "value": "#FF0000", "cssVar": "--pop-color-primary" }
+    },
+    "Foundation": {}
+  },
+  "components": {
+    "Note": {
+      "blockFolder": "blocks/note",
+      "properties": { "background-color": "#EFF6FF" }
+    }
+  }
+}
