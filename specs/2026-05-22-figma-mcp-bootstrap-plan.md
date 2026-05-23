@@ -398,7 +398,7 @@ test('parses the real styles/styles.css without errors', async () => {
   assert.equal(result.collections['POP Brand'].groups.Layout['block-radius'].value, '8px');
 
   // Foundation
-  assert.ok(result.collections.Foundation.groups.Typography['font-family-body'].value.startsWith('Poppins'));
+  assert.ok(result.collections.Foundation.groups.Typography['body-font-family'].value.startsWith('Poppins'));
 });
 ```
 

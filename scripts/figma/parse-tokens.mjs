@@ -40,6 +40,11 @@ function extractDeclarations(css) {
   return decls;
 }
 
+// NOTE: `alias` records only the immediate var() reference in `rawValue`
+// (correct for 1-hop chains like --pop-note-ring: var(--pop-color-info), which
+// is all styles.css contains today). For 2+ hop chains the recorded alias
+// is still the outermost var(), not the chain's terminal source. Revisit if
+// styles.css ever introduces multi-hop aliases.
 function resolveValue(rawValue, decls, seen = new Set()) {
   const aliasMatch = rawValue.match(/^var\((--[a-z0-9-]+)\)$/i);
   if (!aliasMatch) return { value: rawValue, alias: null };
