@@ -1,0 +1,262 @@
+{
+  "figmaFileUrl": "https://www.figma.com/design/qGfExcnCToIzAnNJzTEioH",
+  "figmaFileKey": "qGfExcnCToIzAnNJzTEioH",
+  "lastSyncedVersionId": "e1-rollback-2026-05-23",
+  "lastSyncedAt": "2026-05-24T05:50:59.901Z",
+  "variables": {
+    "POP Brand": {
+      "Color/primary": {
+        "value": "#642CDB",
+        "cssVar": "--pop-color-primary"
+      },
+      "Color/info": {
+        "value": "#3B82F6",
+        "cssVar": "--pop-color-info"
+      },
+      "Color/success": {
+        "value": "#10B981",
+        "cssVar": "--pop-color-success"
+      },
+      "Color/warning": {
+        "value": "#F59E0B",
+        "cssVar": "--pop-color-warning"
+      },
+      "Color/caution": {
+        "value": "#F97316",
+        "cssVar": "--pop-color-caution"
+      },
+      "Color/danger": {
+        "value": "#EF4444",
+        "cssVar": "--pop-color-danger"
+      },
+      "Block tints/note-tint": {
+        "value": "#EFF6FF",
+        "cssVar": "--pop-note-tint"
+      },
+      "Block tints/note-ring": {
+        "value": "#3B82F6",
+        "cssVar": "--pop-note-ring",
+        "alias": "--pop-color-info"
+      },
+      "Block tints/tip-tint": {
+        "value": "#ECFDF5",
+        "cssVar": "--pop-tip-tint"
+      },
+      "Block tints/tip-ring": {
+        "value": "#10B981",
+        "cssVar": "--pop-tip-ring",
+        "alias": "--pop-color-success"
+      },
+      "Block tints/warning-tint": {
+        "value": "#FFFBEB",
+        "cssVar": "--pop-warning-tint"
+      },
+      "Block tints/warning-ring": {
+        "value": "#F59E0B",
+        "cssVar": "--pop-warning-ring",
+        "alias": "--pop-color-warning"
+      },
+      "Block tints/caution-tint": {
+        "value": "#FFF7ED",
+        "cssVar": "--pop-caution-tint"
+      },
+      "Block tints/caution-ring": {
+        "value": "#F97316",
+        "cssVar": "--pop-caution-ring",
+        "alias": "--pop-color-caution"
+      },
+      "Block tints/important-tint": {
+        "value": "#FEF2F2",
+        "cssVar": "--pop-important-tint"
+      },
+      "Block tints/important-ring": {
+        "value": "#EF4444",
+        "cssVar": "--pop-important-ring",
+        "alias": "--pop-color-danger"
+      },
+      "Table/table-header-bg": {
+        "value": "#0B1D59",
+        "cssVar": "--pop-table-header-bg"
+      },
+      "Table/table-header-fg": {
+        "value": "#FFFFFF",
+        "cssVar": "--pop-table-header-fg"
+      },
+      "Table/table-row-alt-bg": {
+        "value": "#F8FAFC",
+        "cssVar": "--pop-table-row-alt-bg"
+      },
+      "Table/table-border": {
+        "value": "#E2E8F0",
+        "cssVar": "--pop-table-border"
+      },
+      "Layout/block-radius": {
+        "value": "8px",
+        "cssVar": "--pop-block-radius"
+      },
+      "Layout/block-pad-y": {
+        "value": "14px",
+        "cssVar": "--pop-block-pad-y"
+      },
+      "Layout/block-pad-x": {
+        "value": "18px",
+        "cssVar": "--pop-block-pad-x"
+      },
+      "Layout/block-gap": {
+        "value": "1.25rem",
+        "cssVar": "--pop-block-gap"
+      }
+    },
+    "Foundation": {
+      "Color/link-color": {
+        "value": "#035fe6",
+        "cssVar": "--link-color"
+      },
+      "Color/link-hover-color": {
+        "value": "#136ff6",
+        "cssVar": "--link-hover-color"
+      },
+      "Color/background-color": {
+        "value": "#fff",
+        "cssVar": "--background-color"
+      },
+      "Color/text-color": {
+        "value": "rgb(74, 74, 74)",
+        "cssVar": "--text-color"
+      },
+      "Sidenav/sidenav-bg-color": {
+        "value": "#F1F1F1",
+        "cssVar": "--sidenav-bg-color"
+      },
+      "Sidenav/sidenav-title-color": {
+        "value": "#000",
+        "cssVar": "--sidenav-title-color"
+      },
+      "Sidenav/sidenav-selection-color": {
+        "value": "#642CDB",
+        "cssVar": "--sidenav-selection-color"
+      },
+      "Sidenav/sidenav-text-color": {
+        "value": "#484848",
+        "cssVar": "--sidenav-text-color"
+      },
+      "Sidenav/sidenav-bullet-color": {
+        "value": "#C0C0C0",
+        "cssVar": "--sidenav-bullet-color"
+      },
+      "Typography/body-font-family": {
+        "value": "Poppins, adobe-clean, \"Source Sans Pro\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, Ubuntu, \"Trebuchet MS\", \"Lucida Grande\"",
+        "cssVar": "--body-font-family"
+      },
+      "Typography/heading-font-family": {
+        "value": "Poppins, adobe-clean, \"Source Sans Pro\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, Ubuntu, \"Trebuchet MS\", \"Lucida Grande\"",
+        "cssVar": "--heading-font-family",
+        "alias": "--body-font-family"
+      },
+      "Typography/fixed-font-family": {
+        "value": "Poppins, 'Roboto Mono', menlo, consolas, 'Liberation Mono', monospace",
+        "cssVar": "--fixed-font-family"
+      },
+      "Typography/body-font-size-m": {
+        "value": "22px",
+        "cssVar": "--body-font-size-m"
+      },
+      "Typography/body-font-size-s": {
+        "value": "18px",
+        "cssVar": "--body-font-size-s"
+      },
+      "Typography/body-font-size-xs": {
+        "value": "16px",
+        "cssVar": "--body-font-size-xs"
+      },
+      "Typography/body-font-size-xxs": {
+        "value": "14px",
+        "cssVar": "--body-font-size-xxs"
+      }
+    }
+  },
+  "components": {
+    "Note": {
+      "blockFolder": "blocks/note",
+      "properties": {
+        "margin": "var(--pop-block-gap) 0",
+        "padding": "var(--pop-block-pad-y) var(--pop-block-pad-x)",
+        "border-radius": "var(--pop-block-radius)",
+        "background-color": "var(--pop-note-tint)",
+        "color": "var(--text-color)",
+        "font-size": "var(--body-font-size-xs)",
+        "line-height": "1.5"
+      }
+    },
+    "Warning": {
+      "blockFolder": "blocks/warning",
+      "properties": {
+        "margin": "var(--pop-block-gap) 0",
+        "padding": "var(--pop-block-pad-y) var(--pop-block-pad-x)",
+        "border-radius": "var(--pop-block-radius)",
+        "background-color": "var(--pop-warning-tint)",
+        "color": "var(--text-color)",
+        "font-size": "var(--body-font-size-xs)",
+        "line-height": "1.5"
+      }
+    },
+    "Tip": {
+      "blockFolder": "blocks/tip",
+      "properties": {
+        "margin": "var(--pop-block-gap) 0",
+        "padding": "var(--pop-block-pad-y) var(--pop-block-pad-x)",
+        "border-radius": "var(--pop-block-radius)",
+        "background-color": "var(--pop-tip-tint)",
+        "color": "var(--text-color)",
+        "font-size": "var(--body-font-size-xs)",
+        "line-height": "1.5"
+      }
+    },
+    "Caution": {
+      "blockFolder": "blocks/caution",
+      "properties": {
+        "margin": "var(--pop-block-gap) 0",
+        "padding": "var(--pop-block-pad-y) var(--pop-block-pad-x)",
+        "border-radius": "var(--pop-block-radius)",
+        "background-color": "var(--pop-caution-tint)",
+        "color": "var(--text-color)",
+        "font-size": "var(--body-font-size-xs)",
+        "line-height": "1.5"
+      }
+    },
+    "Important": {
+      "blockFolder": "blocks/important",
+      "properties": {
+        "margin": "var(--pop-block-gap) 0",
+        "padding": "var(--pop-block-pad-y) var(--pop-block-pad-x)",
+        "border-radius": "var(--pop-block-radius)",
+        "background-color": "var(--pop-important-tint)",
+        "color": "var(--text-color)",
+        "font-size": "var(--body-font-size-xs)",
+        "line-height": "1.5"
+      }
+    },
+    "Table": {
+      "blockFolder": "blocks/table",
+      "properties": {
+        "margin": "var(--pop-block-gap) 0"
+      }
+    },
+    "Header": {
+      "blockFolder": "blocks/header",
+      "properties": {}
+    },
+    "Footer": {
+      "blockFolder": "blocks/footer",
+      "properties": {}
+    },
+    "Sidenav": {
+      "blockFolder": "blocks/sidenav",
+      "properties": {}
+    },
+    "Minitoc": {
+      "blockFolder": "blocks/minitoc",
+      "properties": {}
+    }
+  }
+}

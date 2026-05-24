@@ -1,0 +1,7 @@
+:root {
+  --pop-color-primary: #642CDB;
+  --pop-color-info:    #3B82F6;
+  --pop-note-tint:     #EFF6FF;
+  --pop-note-ring:     var(--pop-color-info);
+  --pop-block-radius:  8px;
+}

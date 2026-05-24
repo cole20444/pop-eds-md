@@ -1,0 +1,18 @@
+{
+  "figmaFileUrl": "https://www.figma.com/design/abc123/POP-EDS-Design-System",
+  "figmaFileKey": "abc123",
+  "lastSyncedVersionId": "v1",
+  "lastSyncedAt": "2026-05-22T14:30:00Z",
+  "variables": {
+    "POP Brand": {
+      "Color/primary": { "value": "#642CDB", "cssVar": "--pop-color-primary" }
+    },
+    "Foundation": {}
+  },
+  "components": {
+    "Note": {
+      "blockFolder": "blocks/note",
+      "properties": { "background-color": "#EFF6FF" }
+    }
+  }
+}
