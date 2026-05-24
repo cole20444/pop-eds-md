@@ -1,12 +1,12 @@
 {
   "figmaFileUrl": "https://www.figma.com/design/qGfExcnCToIzAnNJzTEioH",
   "figmaFileKey": "qGfExcnCToIzAnNJzTEioH",
-  "lastSyncedVersionId": "bootstrap-2026-05-23",
-  "lastSyncedAt": "2026-05-23T13:26:33.013Z",
+  "lastSyncedVersionId": "e1-2026-05-23-token-roundtrip",
+  "lastSyncedAt": "2026-05-24T05:41:58.064Z",
   "variables": {
     "POP Brand": {
       "Color/primary": {
-        "value": "#642CDB",
+        "value": "#FF0000",
         "cssVar": "--pop-color-primary"
       },
       "Color/info": {

@@ -97,7 +97,7 @@
   /* ─────────────────────────────────────────────────────────────────
    *  POP brand tokens  (replace hex values when official brand is known)
    * ──────────────────────────────────────────────────────────────── */
-  --pop-color-primary:   #642CDB;   /* primary accent */
+  --pop-color-primary:   #FF0000;   /* primary accent */
   --pop-color-info:      #3B82F6;   /* info / note */
   --pop-color-success:   #10B981;   /* positive / tip */
   --pop-color-warning:   #F59E0B;   /* warning amber */
