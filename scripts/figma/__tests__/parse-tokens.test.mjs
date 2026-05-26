@@ -52,3 +52,19 @@ test('parses the real styles/styles.css without errors', async () => {
   // Foundation
   assert.ok(result.collections.Foundation.groups.Typography['body-font-family'].value.startsWith('Poppins'));
 });
+
+test('classifies header, nav, hover, breadcrumbs into the right Foundation groups', () => {
+  const css = `:root {
+    --header-bg-color: #0B1D59;
+    --nav-height: 4rem;
+    --hover-bg-color: rgba(50,50,50,.05);
+    --brdcrmb-primary-color: #000;
+    --brdcrmb-secondary-color: #000;
+  }`;
+  const result = parseTokens(css);
+  assert.equal(result.collections.Foundation.groups.Header['header-bg-color'].value, '#0B1D59');
+  assert.equal(result.collections.Foundation.groups.Layout['nav-height'].value, '4rem');
+  assert.equal(result.collections.Foundation.groups.Color['hover-bg-color'].value, 'rgba(50,50,50,.05)');
+  assert.equal(result.collections.Foundation.groups.Breadcrumbs['brdcrmb-primary-color'].value, '#000');
+  assert.equal(result.collections.Foundation.groups.Breadcrumbs['brdcrmb-secondary-color'].value, '#000');
+});

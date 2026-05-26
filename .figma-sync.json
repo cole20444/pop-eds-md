@@ -1,8 +1,8 @@
 {
   "figmaFileUrl": "https://www.figma.com/design/qGfExcnCToIzAnNJzTEioH",
   "figmaFileKey": "qGfExcnCToIzAnNJzTEioH",
-  "lastSyncedVersionId": "e1-rollback-2026-05-23",
-  "lastSyncedAt": "2026-05-24T05:50:59.901Z",
+  "lastSyncedVersionId": "bootstrap-2026-05-23",
+  "lastSyncedAt": "2026-05-26T17:12:06.197Z",
   "variables": {
     "POP Brand": {
       "Color/primary": {
@@ -124,6 +124,10 @@
         "value": "rgb(74, 74, 74)",
         "cssVar": "--text-color"
       },
+      "Color/hover-bg-color": {
+        "value": "rgba(50,50,50,.05)",
+        "cssVar": "--hover-bg-color"
+      },
       "Sidenav/sidenav-bg-color": {
         "value": "#F1F1F1",
         "cssVar": "--sidenav-bg-color"
@@ -172,6 +176,42 @@
       "Typography/body-font-size-xxs": {
         "value": "14px",
         "cssVar": "--body-font-size-xxs"
+      },
+      "Layout/nav-height": {
+        "value": "4rem",
+        "cssVar": "--nav-height"
+      },
+      "Breadcrumbs/brdcrmb-primary-color": {
+        "value": "#000",
+        "cssVar": "--brdcrmb-primary-color"
+      },
+      "Breadcrumbs/brdcrmb-secondary-color": {
+        "value": "#000",
+        "cssVar": "--brdcrmb-secondary-color"
+      },
+      "Header/header-bg-color": {
+        "value": "#0B1D59",
+        "cssVar": "--header-bg-color"
+      },
+      "Header/header-title-color": {
+        "value": "#FFF",
+        "cssVar": "--header-title-color"
+      },
+      "Header/header-button-group-button-border-color": {
+        "value": "#0B1D59",
+        "cssVar": "--header-button-group-button-border-color"
+      },
+      "Header/header-button-group-button-bg-color": {
+        "value": "#fff",
+        "cssVar": "--header-button-group-button-bg-color"
+      },
+      "Header/header-mob-toc-btn-bg-color": {
+        "value": "#F1F1F1",
+        "cssVar": "--header-mob-toc-btn-bg-color"
+      },
+      "Header/header-mob-toc-btn-border-color": {
+        "value": "#E7E7E7",
+        "cssVar": "--header-mob-toc-btn-border-color"
       }
     }
   },

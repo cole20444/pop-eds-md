@@ -12,8 +12,11 @@ const POP_GROUPS = [
 
 const FOUNDATION_GROUPS = [
   { match: /^--body-font-family$|^--heading-font-family$|^--fixed-font-family$|^--body-font-size-/, collection: 'Foundation', group: 'Typography' },
-  { match: /^--link-color$|^--link-hover-color$|^--text-color$|^--background-color$/, collection: 'Foundation', group: 'Color' },
+  { match: /^--link-color$|^--link-hover-color$|^--text-color$|^--background-color$|^--hover-/, collection: 'Foundation', group: 'Color' },
   { match: /^--sidenav-/, collection: 'Foundation', group: 'Sidenav' },
+  { match: /^--header-/, collection: 'Foundation', group: 'Header' },
+  { match: /^--nav-/, collection: 'Foundation', group: 'Layout' },
+  { match: /^--brdcrmb-/, collection: 'Foundation', group: 'Breadcrumbs' },
 ];
 
 const ALL_GROUPS = [...POP_GROUPS, ...FOUNDATION_GROUPS];
